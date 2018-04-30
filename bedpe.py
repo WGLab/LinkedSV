@@ -97,6 +97,11 @@ class QuantifiedBKCand:
 
         return outstring
 
+    def output_core(self):
+
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.support_barcodes)
+        return outstring
+
     def frm_id_list1(self):
         frm_id_list1 = self.support_frm_ids1.strip(',').split(',')
         for i in range(0, len(frm_id_list1)):

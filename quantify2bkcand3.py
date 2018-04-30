@@ -92,7 +92,9 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
     out_file = args.quantified_bk_pair_file
     out_fp = open(out_file, 'w')
 
-    for quantified_bk_cand in quantified_bk_cand_list: out_fp.write(quantified_bk_cand.output() + endl) 
+    for quantified_bk_cand in quantified_bk_cand_list: 
+        if quantified_bk_cand.score > 10:
+            out_fp.write(quantified_bk_cand.output() + endl) 
     out_fp.close()
 
     del bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list

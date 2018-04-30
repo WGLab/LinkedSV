@@ -17,7 +17,7 @@ def merge_quantified_calls(args, dbo_args, endpoint_args):
     
     myprint('merging candidate calls')
 
-    refined_svcall_list = read_object_file(args.refinedbedpe_file, RefinedQuantBKCand)
+    refined_svcall_list = read_object_file(args.quantified_bk_pair_file, RefinedQuantBKCand)
 
     edge_list = list()
 
@@ -76,7 +76,7 @@ def merge_quantified_calls(args, dbo_args, endpoint_args):
     merged_call_bedpe_fp = open(merged_call_bedpe_file, 'w')
     for merged_call in merged_call_list:
         if merged_call.score < 100: continue
-        merged_call_bedpe_fp.write(merged_call.output() + endl)
+        merged_call_bedpe_fp.write(merged_call.output_core() + endl)
 
     merged_call_bedpe_fp.close()
 

@@ -50,11 +50,11 @@ def main():
         gc.collect()
 
     ## refine breakpoints ##
-    if args.run_from_begining == False and check_file_exists(args.refinedbedpe_file) == True:
-        myprint('refined bedpe file existed, skipped refinement of sv candidates')
-    else:
-        refine_breakpoints(args, dbo_args, endpoint_args)
-        gc.collect()
+    #if args.run_from_begining == False and check_file_exists(args.refinedbedpe_file) == True:
+    #    myprint('refined bedpe file existed, skipped refinement of sv candidates')
+    #else:
+    #    refine_breakpoints(args, dbo_args, endpoint_args)
+    #    gc.collect()
 
     ## merge calls ##
     if args.run_from_begining == False and check_file_exists(args.merged_bedpe_file) == True:
