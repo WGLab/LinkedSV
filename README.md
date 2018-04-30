@@ -1,4 +1,2 @@
-# LinkedReadSV
+# LinkedSV
 
-requirements:
-python package: scikit-learn
