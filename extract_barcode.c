@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <utils.h>
+#include "utils.h"
 
 #include <htslib/sam.h>
 

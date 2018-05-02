@@ -2,3 +2,8 @@
 *.o
 *.a
 *.so
+*.so.1
+*.pico
+tabix
+htsfile
+bgzip

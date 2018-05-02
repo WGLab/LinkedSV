@@ -1,8 +1,12 @@
-CC = gcc   -O0 -g -I ./include -L ./lib/
+CC = gcc  -O0 -I ./include  -L ./lib/
 
-SOBJ = extract_barcode.o 
+all: extract_barcode sort_barcode
+extract_barcode: extract_barcode.o
+	$(CC) -o extract_barcode extract_barcode.o -l hts -l z -l m -l pthread
 
-EXTRACT_BARCODE: $(SOBJ)
-	$(CC)    -o extract_barcode $(SOBJ) -l hts -l z -l m -l pthread
+sort_barcode: sort_barcode.o utils.o
+	$(CC) -o sort_barcode sort_barcode.o utils.o -I.
+
 clean:
 	rm -f *.o  
+

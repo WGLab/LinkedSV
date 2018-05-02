@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <utils.h>
+#include "utils.h"
 
 
 static BC_INFO_SET * read_bc_info(char * bcd_file, CHR_INFO * chr_info)

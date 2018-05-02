@@ -67,7 +67,7 @@ class global_parameter:
         self.bk_cand_pair_file = self.out_prefix + '.bk_cand_pairs'
         self.quantified_bk_pair_file = self.out_prefix + '.qbkpair.bedpe'
         self.refinedbedpe_file = self.out_prefix + '.qbkpair.refined.bedpe'
-        self.merged_bedpe_file = self.out_prefix + '.mergedsv.bedpe'
+        self.merged_bedpe_file = self.out_prefix + '.svcalls.bedpe'
 
         self.chrname2tid = None
         self.tid2chrname = None

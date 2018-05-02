@@ -17,7 +17,8 @@ def merge_quantified_calls(args, dbo_args, endpoint_args):
     
     myprint('merging candidate calls')
 
-    refined_svcall_list = read_object_file(args.quantified_bk_pair_file, RefinedQuantBKCand)
+    #refined_svcall_list = read_object_file(args.refinedbedpe_file, RefinedQuantBKCand)
+    refined_svcall_list = read_object_file(args.quantified_bk_pair_file, QuantifiedBKCand)
 
     edge_list = list()
 
@@ -88,7 +89,8 @@ def merge1call_group(bedpe_merge_group):
 
     integrated_score_list = list()
     for bedpe in bedpe_merge_group:
-        score = bedpe.n_support_reads * int(1e12) + bedpe.score * int(1e4)  + bedpe.type_score
+        #score = bedpe.n_support_reads * int(1e12) + bedpe.score * int(1e4)  + bedpe.type_score
+        score = bedpe.score * int(1e4)  + bedpe.type_score
         integrated_score_list.append(score)
 
     max_score_index = 0
