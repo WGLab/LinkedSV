@@ -63,6 +63,26 @@ def main():
         merge_quantified_calls(args, dbo_args, endpoint_args)
         gc.collect()
 
+    if check_file_exists(args.merged_bedpe_file):
+        remove_file(args.bcd_file)
+        remove_file(endpoint_args.bcd21_file)
+        remove_file(endpoint_args.tmpbcd22_file)
+        remove_file(endpoint_args.bcd22_file)
+        remove_file(args.bcd_file_of_target_region)
+        remove_file(args.args_file)
+        remove_file(args.global_distribution_file)
+
+        remove_file(args.node33_file) 
+        remove_file(args.node35_file) 
+        remove_file(args.node53_file) 
+        remove_file(args.node55_file) 
+        remove_file(args.node_cluster33_file)
+        remove_file(args.node_cluster53_file)
+        remove_file(args.node_cluster35_file)
+        remove_file(args.node_cluster55_file)
+
+        remove_file(args.bk_cand_pair_file)
+        remove_file(args.quantified_bk_pair_file)
     return
 
 def method1(args, dbo_args, endpoint_args):

@@ -93,7 +93,7 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
     out_fp = open(out_file, 'w')
 
     for quantified_bk_cand in quantified_bk_cand_list: 
-        if quantified_bk_cand.score > 10:
+        if quantified_bk_cand.score > 0:
             out_fp.write(quantified_bk_cand.output() + endl) 
     out_fp.close()
 

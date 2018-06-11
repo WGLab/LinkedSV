@@ -89,7 +89,14 @@ def get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp):
 
     N5_length, N25_length, N50_length, N75_length, N95_length, total_length = calculate_length_statistics(frm_length_list)
     myprint('N5, N25, N50, N75, N95 fragment lengths are %d, %d, %d, %d, %d' % (N5_length, N25_length, N50_length, N75_length, N95_length))
-    endpoint_args.min_frag_length = max(N95_length, endpoint_args.min_frag_length)
+    if args.is_wgs: 
+        endpoint_args.min_frag_length = max(N95_length, endpoint_args.min_frag_length)
+    else: 
+        endpoint_args.min_frag_length = 0
+
+    if args.user_defined_min_frag_length > 0:
+        endpoint_args.min_frag_length = args.user_defined_min_frag_length
+
     global_dist_fp.write('endpoint_args.min_frag_length\t%d\n' % endpoint_args.min_frag_length)
 
     args.fragment_length_lmda = fit_geometric_distribution(frm_length_list, readpair = False) 

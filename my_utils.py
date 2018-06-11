@@ -81,6 +81,14 @@ def check_file_exists(input_file):
     else:
         return False
 
+def remove_file(input_file):
+    if os.path.isfile(input_file):
+        try:
+            os.remove(input_file)
+        except OSError as err:
+            myprint ('WARNING! cannot remove temporary file:%s' % input_file)
+    return
+
 def line_count(in_file):
     n = 0
     in_file_fp = open(in_file, 'r')

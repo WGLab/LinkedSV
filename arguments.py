@@ -108,7 +108,7 @@ class global_parameter:
         self.median_fragment_length = 50000
         self.mean_fragment_length = 72000   
 
-        self.min_support_fragments = 3
+        self.min_support_fragments = 5
 
     def copy(self): 
         return copy.deepcopy(self)
@@ -242,7 +242,7 @@ def parse_user_arguments():
     parser.add_argument('-q', '--min_mapq', required = False, metavar = 'min_map_qual', type = int, default = 20, help ='minimal map quality of reads used for analysis (default: 20)')
     parser.add_argument('-t', '--n_thread', required = False, metavar = 'num_thread', type = int, default = 1, help ='number of threads (default: 1)')
 
-    parser.add_argument('--min_fragment_length', metavar = 'min_fragment_length', required = False, type = int, default = -1, help ='minimal fragment length considered for SV calling')
+    parser.add_argument('--min_fragment_length', metavar = 'min_fragment_length', required = False, type = int, default = 0, help ='minimal fragment length considered for SV calling')
 
     parser.add_argument('--samtools', required = False, metavar = 'path/to/samtools', type = str, default = 'samtools', help ='path to samtools (default: find in environmental path)')
     parser.add_argument('--bedtools', required = False, metavar = 'path/to/bedtools', type = str, default = 'bedtools', help ='path to bedtools (default: find in environmental path)')
