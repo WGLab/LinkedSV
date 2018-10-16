@@ -10,14 +10,19 @@ import bisect
 from scipy import spatial
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
+from scipy.stats import poisson
+from scipy.stats import gamma 
+from scipy.stats import norm 
+from scipy.stats import expon
+from scipy import stats
+import global_distribution
+
+from get_high_coverage_regions import *
 
 def main():
     
     args, dbo_args, endpoint_args = parse_user_arguments()
 
-    import global_distribution
-    myprint('estimation global parameters')
-    global_distribution.estimate_global_distribution(args, dbo_args, endpoint_args)
     quantify2bkcand(args, dbo_args, endpoint_args)
 
     return 
@@ -25,16 +30,49 @@ def main():
 
 def quantify2bkcand(args, dbo_args, endpoint_args):
 
-    myprint ('reading paired breakpoint candidate file: %s' % args.bk_cand_pair_file)
-    paired_bk_cand_list = read_paired_bk_cand_file(args.bk_cand_pair_file)
+    myprint('estimation global parameters')
+    if args.global_distribution_calculated == False:
+        global_distribution.estimate_global_distribution(args, dbo_args, endpoint_args)
 
+    myprint ('reading paired breakpoint candidate file: %s' % args.bk_cand_pair_file)
+
+    high_cov_dict, high_cov_3p_dict, high_cov_5p_dict = read_high_cov_region_file(endpoint_args.high_cov_file)
+
+    raw_paired_bk_cand_list = read_paired_bk_cand_file(args.bk_cand_pair_file)
+
+    paired_bk_cand_list = list()
+
+    for paired_bk_cand in raw_paired_bk_cand_list:
+
+        tid1 = args.chrname2tid[paired_bk_cand.chrm1]
+        tid2 = args.chrname2tid[paired_bk_cand.chrm2]
+
+        if tid1 in args.alt_tid_set: continue
+        if tid2 in args.alt_tid_set: continue
+
+        pos1 = paired_bk_cand.start1
+        pos2 = paired_bk_cand.start2
+
+        if paired_bk_cand.endtype1 == '3p_end' and in_high_cov_region(tid1, pos1, high_cov_3p_dict): continue
+        if paired_bk_cand.endtype1 == '5p_end' and in_high_cov_region(tid1, pos1, high_cov_5p_dict): continue
+        if paired_bk_cand.endtype2 == '3p_end' and in_high_cov_region(tid2, pos2, high_cov_3p_dict): continue
+        if paired_bk_cand.endtype2 == '5p_end' and in_high_cov_region(tid2, pos2, high_cov_5p_dict): continue
+
+        paired_bk_cand_list.append(paired_bk_cand)
+    
     myprint ('reading bcd22 file: %s' % endpoint_args.bcd22_file)
     if args.is_wgs:
-        min_frm_length = endpoint_args.min_frag_length/2
+        min_frm_length = 2000
     else:
-        min_frm_length = 0 
+        min_frm_length = 200 
 
     bcd22_frm_list = read_bcd22_file(endpoint_args.bcd22_file, min_frm_length)
+
+    if os.path.exists(args.node33_file):
+        args.n_node33 = line_count(args.node33_file)
+    else:
+        myprint ('ERROR! node33 file does not exist!')
+        sys.exit()
 
     myprint ('sorting fragments by start position')
     start_sorted_frm_list = sorted(bcd22_frm_list, key = lambda frm: frm.key_start())
@@ -66,7 +104,6 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
         args.target_region_bed_db = target_region_bed_db
         args.target_region_bed_startpos_db = target_region_bed_startpos_db
 
-
     quantified_bk_cand_list = list()
     i = 0
     for i in range(0, len(paired_bk_cand_list)):
@@ -81,7 +118,9 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
     out_file = args.quantified_bk_pair_file
     out_fp = open(out_file, 'w')
 
-    for quantified_bk_cand in quantified_bk_cand_list: out_fp.write(quantified_bk_cand.output() + endl) 
+    for quantified_bk_cand in quantified_bk_cand_list: 
+        if quantified_bk_cand.score > 0:
+            out_fp.write(quantified_bk_cand.output() + endl) 
     out_fp.close()
 
     del bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list
@@ -98,6 +137,7 @@ def split_same_fragment(args, same_fragment_list):
         if frm.num_reads < 3:
             non_split_same_fragment_list.append(frm)
             continue
+
         map_pos = frm.map_pos 
         map_pos = map_pos.strip(';').split(';')
         read_start_list = list()
@@ -127,11 +167,60 @@ def split_same_fragment(args, same_fragment_list):
             new_frag_id1 = frm.frag_id + int(1e12)
             new_frag_id2 = frm.frag_id + int(2e12)
 
-            new_attr_list1 = [frm.tid, new_start1, new_end1, new_end1-new_start1, frm.bcd, new_frag_id1, new_num_reads1, frm.hp0, frm.hp1, frm.hp2, new_map_pos1]
+            n_left_weird_reads1       = frm.n_left_weird_reads
+            n_right_weird_reads2      = frm.n_right_weird_reads
+
+            left_weird_reads_output1  = frm.left_weird_reads_output 
+            right_weird_reads_output2 = frm.right_weird_reads_output
+
+            if frm.other_weird_reads_output == '.':
+                n_right_weird_reads1 = 0
+                n_left_weird_reads2  = 0
+
+                right_weird_reads_output1 = '.'
+                left_weird_reads_output2 = '.'
+
+                other_weird_reads_output1 = '.'
+                other_weird_reads_output2 = '.'
+                
+            else:
+
+                left_weird_reads_info_list, right_weird_reads_info_list, other_weird_reads_output = get_weird_reads_info_from_fragments(frm)
+                
+                n_right_weird_reads1 = 0
+                n_left_weird_reads2  = 0
+
+                new_right_weird_reads_list1 = list()
+                new_left_weird_reads_list2 = list()
+
+                new_other_weird_reads_list1 = list()
+                new_other_weird_reads_list2 = list()
+
+                for readinfo in other_weird_reads_output:
+                    if new_end1 - readinfo.start < 400 and new_end1 - readinfo.end >= 0 and (not readinfo.flag & 0x10):
+                        n_right_weird_reads1 += 1
+                        new_right_weird_reads_list1.append(readinfo)
+                    elif readinfo.end - new_start2 < 400 and readinfo.start - new_start2 >= 0 and readinfo.flag & 0x10: 
+                        n_left_weird_reads2  += 1
+                        new_left_weird_reads_list2.append(readinfo)
+                    elif new_end1 - readinfo.end < 0:
+                        new_other_weird_reads_list2.append(readinfo)
+                    elif readinfo.start - new_start2 < 0:
+                        new_other_weird_reads_list1.append(readinfo)
+
+                right_weird_reads_output1 = convert_reads_info_list_to_string (new_right_weird_reads_list1)
+                left_weird_reads_output2  = convert_reads_info_list_to_string (new_left_weird_reads_list2)
+
+                other_weird_reads_output1 = convert_reads_info_list_to_string (new_other_weird_reads_list1) 
+                other_weird_reads_output2 = convert_reads_info_list_to_string (new_other_weird_reads_list2)
+                
+
+            new_attr_list1 = [frm.tid, new_start1, new_end1, new_end1-new_start1, frm.bcd, new_frag_id1, new_num_reads1, frm.hp0, frm.hp1, frm.hp2, new_map_pos1, n_left_weird_reads1, n_right_weird_reads1, left_weird_reads_output1, right_weird_reads_output1, other_weird_reads_output1]
             new_frm1 = Fragment(new_attr_list1)
 
-            new_attr_list2 = [frm.tid, new_start2, new_end2, new_end2-new_start2, frm.bcd, new_frag_id2, new_num_reads2, frm.hp0, frm.hp1, frm.hp2, new_map_pos2]
+            new_attr_list2 = [frm.tid, new_start2, new_end2, new_end2-new_start2, frm.bcd, new_frag_id2, new_num_reads2, frm.hp0, frm.hp1, frm.hp2, new_map_pos2, n_left_weird_reads2, n_right_weird_reads2, left_weird_reads_output2, right_weird_reads_output2, other_weird_reads_output2]
             new_frm2 = Fragment(new_attr_list2)
+
             split_same_fragment_list1.append(new_frm1)
             split_same_fragment_list2.append(new_frm2)
         else:
@@ -139,10 +228,9 @@ def split_same_fragment(args, same_fragment_list):
 
     return split_same_fragment_list1, split_same_fragment_list2, non_split_same_fragment_list 
 
+def get_region_frm_list (tid, start, end, endtype, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list):
 
-def get_region_frm_list(tid, start, end, endtype, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list):
-
-    frm_list = list()
+    frm_list = list ()
     ## get all fragments of which the endpoints in the region
     if endtype == '5p_end':
         searchstart_index = bisect.bisect_left(start_key_list, tid * FIX_LENGTH + start) 
@@ -161,47 +249,55 @@ def get_region_frm_list(tid, start, end, endtype, start_sorted_frm_list, end_sor
     return frm_list
 
 def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list):
-    
-
+ 
     paired_bk_cand.format_self(args.chrname2tid)
     tid1 = paired_bk_cand.tid1(args.chrname2tid)
     tid2 = paired_bk_cand.tid2(args.chrname2tid)
 
-    search_range = args.gap_distance950
-    if search_range == None: search_range = paired_bk_cand.end1 - paired_bk_cand.start1
-
+    search_range = args.gap_distance990
     if paired_bk_cand.endtype1 == '5p_end':
-        start1 = paired_bk_cand.start1 
-        end1 = start1 + search_range 
+        start1 = paired_bk_cand.start1 - 100 
+        end1 = start1 + search_range + 100 
     else:
-        end1 = paired_bk_cand.end1
-        start1 = end1 - search_range
+        end1 = paired_bk_cand.end1 + 100
+        start1 = end1 - search_range - 100
 
     if paired_bk_cand.endtype2 == '5p_end':
-        start2 = paired_bk_cand.start2 
-        end2 = start2 + search_range 
+        start2 = paired_bk_cand.start2 - 100
+        end2 = start2 + search_range  + 100
     else:
-        end2 = paired_bk_cand.end2
-        start2 = end2 - search_range
+        end2 = paired_bk_cand.end2 + 100
+        start2 = end2 - search_range - 100
 
-    frm_list1 = get_region_frm_list(tid1, paired_bk_cand.start1, paired_bk_cand.end1, paired_bk_cand.endtype1, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list)
-    frm_list2 = get_region_frm_list(tid2, paired_bk_cand.start2, paired_bk_cand.end2, paired_bk_cand.endtype2, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list)
-
+    frm_list1 = get_region_frm_list(tid1, start1, end1, paired_bk_cand.endtype1, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list)
+    frm_list2 = get_region_frm_list(tid2, start2, end2, paired_bk_cand.endtype2, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list)
     shared_fragment_list1, shared_fragment_list2, same_fragment_list = get_shared_frag_list(frm_list1, frm_list2)
 
     num_same_frm = len(same_fragment_list)
     num_shared_bcd_2mol = len(shared_fragment_list1)
     num_shared_bcd = num_same_frm + num_shared_bcd_2mol
 
-
     split_same_fragment_list1, split_same_fragment_list2, non_split_same_fragment_list = split_same_fragment(args, same_fragment_list)
-
     num_split_mol = len(split_same_fragment_list1)
-
     if num_shared_bcd_2mol + num_split_mol < args.min_support_fragments: return None
 
     shared_fragment_list1 += split_same_fragment_list1
     shared_fragment_list2 += split_same_fragment_list2
+
+    endtype1 = paired_bk_cand.endtype1
+    endtype2 = paired_bk_cand.endtype2
+
+    supp_frm_with_pe_list1 = list()
+    supp_frm_with_pe_list2 = list()
+    supp_frm_without_pe_list1 = list()
+    supp_frm_without_pe_list2 = list()
+    for i in range(0, len(shared_fragment_list1)):
+        if exist_read_pair_support(shared_fragment_list1[i], shared_fragment_list2[i], endtype1, endtype2):
+            supp_frm_with_pe_list1.append(shared_fragment_list1[i])
+            supp_frm_with_pe_list2.append(shared_fragment_list2[i])
+        else:
+            supp_frm_without_pe_list1.append(shared_fragment_list1[i])
+            supp_frm_without_pe_list2.append(shared_fragment_list2[i])
 
     shared_fragment_ids1 = ''
     shared_fragment_ids2 = ''
@@ -211,24 +307,20 @@ def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22
         support_barcodes += frm.bcd + ','
     for frm in shared_fragment_list2:
         shared_fragment_ids2 += '%d,' % frm.frag_id
-    
+   
+    n_readpair_support = len(supp_frm_with_pe_list1)
     shared_fragment_ids1.strip(',')
     shared_fragment_ids2.strip(',')
     support_barcodes.strip(',')
 
-    endtype1 = paired_bk_cand.endtype1
-    endtype2 = paired_bk_cand.endtype2
+    total_logp_gap_ontarget, total_logp_gap_offtarget, total_logp_frm_length = logp_nosv_one_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
+    logp_barcode = logp_nosv_two_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
 
-    print endl + paired_bk_cand.output(), 'n_supp: %d' % len(shared_fragment_list1)
-    llg1 = logp_nosv_one_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
-    llg2 = logp_nosv_two_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
-    llg3 = logp_sv_one_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
-    llg4 = logp_sv_two_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
-
-    ll_nosv = add2logvalue(llg1, llg2)
-    ll_sv = add2logvalue(llg3, llg4)
-    
-    llr_barcode_overlapping = ll_sv - ll_nosv
+    llr_barcode_overlapping = min(max(total_logp_gap_ontarget, total_logp_frm_length), logp_barcode) + 3 * n_readpair_support 
+    llg1 = total_logp_gap_ontarget 
+    llg2 = total_logp_gap_offtarget
+    llg3 = total_logp_frm_length 
+    llg4 = logp_barcode
 
     endtype1_logp, endtype2_logp, predicted_endtype1, predicted_endtype2, predicted_svtype, start1_logp, end1_logp, start2_logp, end2_logp, bk1_pos, bk2_pos = quantification_svtype(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, paired_bk_cand)
 
@@ -244,7 +336,7 @@ def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22
     else:
         svlength = 'N.A.'
 
-    attr_list = [chrm1, bk1_pos, bk1_pos+1, chrm2, bk2_pos, bk2_pos+1, predicted_svtype, svlength, len(shared_fragment_list1), predicted_endtype1, predicted_endtype2, llr_barcode_overlapping, llg1, llg2, llg3, llg4, svtype_logp, endtype1_logp, endtype2_logp, start1_logp, end1_logp, start2_logp, end2_logp, shared_fragment_ids1, shared_fragment_ids2, support_barcodes, tid1, tid2]
+    attr_list = [chrm1, bk1_pos, bk1_pos+1, chrm2, bk2_pos, bk2_pos+1, predicted_svtype, svlength, len(shared_fragment_list1), predicted_endtype1, predicted_endtype2, llr_barcode_overlapping, llg1, llg2, llg3, llg4, svtype_logp, endtype1_logp, endtype2_logp, start1_logp, end1_logp, start2_logp, end2_logp, shared_fragment_ids1, shared_fragment_ids2, support_barcodes, tid1, tid2, n_readpair_support]
 
     quantified_bk_cand = QuantifiedBKCand(attr_list)
     
@@ -331,17 +423,17 @@ def predict_bk_pos(start_pos_list1, start_pos_list2, end_pos_list1, end_pos_list
 
 def estimate_breakpoint_logp(args, position_list):
 
-    p_endpoint_nonbk = float(args.gap_distance950) / float(args.median_fragment_length)
-    p_endpoint_bk = 0.95
+    p_endpoint_nonbk = float(args.gap_distance750) / float(args.median_fragment_length)
+    p_endpoint_bk = 0.75
 
     median_pos = np.median(position_list)     
-    half_gap_distance950 = args.gap_distance950 / 2.0
-    num_within_half_gap_distance950 = 0
+    half_gap_distance750 = args.gap_distance750 / 2.0
+    num_within_half_gap_distance750 = 0
     for i in range(0, len(position_list)):
-        if abs(position_list[i]-median_pos) <= half_gap_distance950:
-            num_within_half_gap_distance950 += 1
+        if abs(position_list[i]-median_pos) <= half_gap_distance750:
+            num_within_half_gap_distance750 += 1
    
-    num_outside_half_gap_distance950 = len(position_list) - num_within_half_gap_distance950
+    num_outside_half_gap_distance750 = len(position_list) - num_within_half_gap_distance750
 
     if p_endpoint_bk < 1e-100: p_endpoint_bk = 1e-100
     if p_endpoint_nonbk < 1e-100: p_endpoint_nonbk = 1e-100
@@ -349,8 +441,8 @@ def estimate_breakpoint_logp(args, position_list):
         p_endpoint_nonbk = p_endpoint_bk
         myprint('WARNING: median fragment length is too small or gap distance is too large')
 
-    logp_bk = num_within_half_gap_distance950 * math.log(p_endpoint_bk, 10) + num_outside_half_gap_distance950 * math.log(1.0-p_endpoint_bk, 10) 
-    logp_nonbk = num_within_half_gap_distance950 * math.log(p_endpoint_nonbk, 10) + num_outside_half_gap_distance950 * math.log(1.0-p_endpoint_nonbk, 10) 
+    logp_bk = num_within_half_gap_distance750 * math.log(p_endpoint_bk, 10) + num_outside_half_gap_distance750 * math.log(1.0-p_endpoint_bk, 10) 
+    logp_nonbk = num_within_half_gap_distance750 * math.log(p_endpoint_nonbk, 10) + num_outside_half_gap_distance750 * math.log(1.0-p_endpoint_nonbk, 10) 
 
     logp = logp_bk - logp_nonbk
 
@@ -369,7 +461,7 @@ def logp_sv_two_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared
     for i in range(0, len(shared_fragment_list1)):
         frm1 = shared_fragment_list1[i]
         frm2 = shared_fragment_list2[i]
-        pbarcode  = float(args.gap_distance_cutoff) * float(args.median_num_fragment_per_bcd) / args.genome_length
+        pbarcode  = float(args.gap_distance_cutoff) * int(args.median_num_fragment_per_bcd+1) / args.genome_length
         if pbarcode < 1e-100: pbarcode = 1e-100
         logp_barcode = math.log(pbarcode, 10)
         lop_fragment_length1 = logp_fragment_length(args, frm1.length) 
@@ -392,71 +484,87 @@ def logp_sv_one_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared
 
 def logp_nosv_two_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2):
 
-    logp = 0
-    for i in range(0, len(shared_fragment_list1)):
-        frm1 = shared_fragment_list1[i]
-        frm2 = shared_fragment_list2[i]
-        pbarcode  = float(args.gap_distance_cutoff) * float(args.median_num_fragment_per_bcd) / args.genome_length
-        if pbarcode < 1e-100: pbarcode = 1e-100
-        logp_barcode = math.log(pbarcode, 10)
-        lop_fragment_length1 = logp_fragment_length(args, frm1.length) 
-        lop_fragment_length2 = logp_fragment_length(args, frm2.length) 
-        logp += logp_barcode + lop_fragment_length1 + lop_fragment_length2
-
-    return logp 
+    area_fold = float(args.genome_length) / float(args.gap_distance_cutoff) 
+    area_fold = area_fold * area_fold
+    lmda = args.n_node33 / area_fold
+    n_supp = len(shared_fragment_list1)
+    logpmf = poisson.logpmf(n_supp, lmda) / math.log(10)
+    logp = logpmf + math.log(area_fold, 10) 
+    return -logp 
        
-def logp_fragment_length(args, frm_length):
-
-    mean_fragment_length = math.log(2) * float(args.median_fragment_length)
-    pmodel = 1.0 / mean_fragment_length
-    logp = math.log(pmodel, 10) + frm_length * math.log((1.0 - pmodel), 10)
-    return logp
-
-    ''' 
-    max_length = len(length_cdf) - 1 
-
-    if length + cdf_smooth_length < max_length and length - cdf_smooth_length > 0:
-        p_length = (length_cdf[length+cdf_smooth_length] - length_cdf[length-cdf_smooth_length]) / (2.0 * cdf_smooth_length)
-    elif length + cdf_smooth_length >= max_length:
-        p_length = (length_cdf[max_length] - length_cdf[max_length-2*cdf_smooth_length]) / (2.0 * cdf_smooth_length)
-    else:
-        p_length = (length_cdf[length+2*cdf_smooth_length] - length_cdf[length]) / (2.0 * cdf_smooth_length)
-
-    if p_length < 1e-100: p_length = 1e-100
-    return math.log(p_length, 10)
-    ''' 
-    
-    
 def logp_nosv_one_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2):
 
-    read_per_bp_genome = args.read_per_bp_genome 
-    print 'no sv one mol,',  
-    logp = 0
+    read_per_bp_genome        = args.read_per_bp_genome
+    assumed_frm_length_list   = list()
+    gap_ontarget_length_list  = list()
+    gap_offtarget_length_list = list()
+
     for i in range(0, len(shared_fragment_list1)):
+
         frm1 = shared_fragment_list1[i]
         frm2 = shared_fragment_list2[i]
         gap_length, gap_tid, gap_start, gap_end = fragment_min_distance(frm1, frm2)
         if gap_length <= 0:
-            logp_gap = 0
+            on_target_length  = 0
+            off_target_length = 0
         else:
             if args.is_wgs:
-                logp_gap = (-1)/math.log(10) * gap_length * args.read_per_bp_genome 
+                on_target_length  = gap_length 
+                off_target_length = 0
             else:
-                on_target_length = get_ontarget_length(args, gap_tid, gap_start, gap_end)
+                on_target_length  = get_ontarget_length(args, gap_tid, gap_start, gap_end)
                 off_target_length = gap_length - on_target_length
-                logp_gap = (-1)/math.log(10) * (args.read_per_bp_ontarget * on_target_length + args.read_per_bp_offtarget * off_target_length) 
-                print 'on_target_length=%d, off_target_length=%d,logp_gap=%f' % (on_target_length, off_target_length, logp_gap),
+
+            gap_ontarget_length_list.append(on_target_length)
+            gap_offtarget_length_list.append(off_target_length)
 
         assumed_frm_length = frm1.length + frm2.length + gap_length 
-        lop_fragment_length = logp_fragment_length(args, assumed_frm_length) 
-        logp_barcode = 0
-        logp += logp_gap + logp_barcode + lop_fragment_length
-        print 'l1, l2 and gap length are: %d, %d, %d, total length is %d, logp_fragment_length=%f' % (frm1.length, frm2.length, gap_length, assumed_frm_length, lop_fragment_length)
+        assumed_frm_length_list.append (assumed_frm_length)
 
-    print 'logp_nosv_one_mol is %f' % logp
+    total_logp_frm_length    = cal_logp_fragment_length (args, assumed_frm_length_list)
+    if args.is_wgs:
+        total_logp_gap_ontarget  = cal_logp_gap_distance (args, gap_ontarget_length_list, args.read_per_bp_genome)
+        total_logp_gap_offtarget = 0
+    else:
+        total_logp_gap_ontarget  = cal_logp_gap_distance (args, gap_ontarget_length_list, args.read_per_bp_ontarget)
+        total_logp_gap_offtarget = cal_logp_gap_distance (args, gap_offtarget_length_list, args.read_per_bp_offtarget)
+
+    return -total_logp_gap_ontarget, -total_logp_gap_offtarget, -total_logp_frm_length
+
+def cal_logp_gap_distance (args, length_list, read_per_bp):
+
+    if len(length_list) == 0: return 0
+    n_supp = len(length_list)
+    mean_length = np.mean(length_list)
+    mean_population = 1.0 / float(read_per_bp)
+    logp = gamma.logsf(mean_length * n_supp, a=n_supp, scale=mean_population) / math.log(10.0)
+    if logp == -float('inf'): logp = -10000000
+    n_compare_times = args.num_reads_genome / n_supp
+    logp += math.log(n_compare_times, 10)
     return logp
 
+def cal_logp_fragment_length(args, assumed_frm_length_list):
 
+    n_supp = len(assumed_frm_length_list)
+    mean_supp_fragments = np.mean(assumed_frm_length_list)
+    mean_population = 1.0 / args.fragment_length_lmda
+    logp = gamma.logsf(mean_supp_fragments * n_supp, a=n_supp, scale=mean_population) / math.log(10.0)
+    if logp == -float('inf'): logp = -10000000
+    n_compare_times = args.total_num_fragment / n_supp
+    logp += math.log(n_compare_times, 10)
+    return logp 
+
+def cal_logp_fragment_length2(args, assumed_frm_length_list):
+    n_supp = len(assumed_frm_length_list)
+    mean_supp_fragments = np.mean(assumed_frm_length_list)
+    population_mean = 1.0 / args.fragment_length_lmda
+    p = expon.sf(mean_supp_fragments, scale=population_mean)
+    lmda = n_supp * p
+    log_pmf = poisson.logpmf(n_supp, lmda)  / math.log(10)
+    if log_pmf == -float('inf'): log_pmf = -10000000
+    log_expected = log_pmf + math.log(args.total_num_fragment / n_supp, 10)
+    return log_expected
+     
 def get_ontarget_length(args, gap_tid, gap_start, gap_end):
 
     if gap_tid not in args.target_region_bed_db:

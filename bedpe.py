@@ -24,12 +24,13 @@ class Bedpe:
 
 class PairedBkCand:
     def __init__(self, attr_list):             
-        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.endtype1, self.endtype2, self.n_supp = attr_list[0:11]
+        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.endtype1, self.endtype2, self.n_supp, self.score, self.info = attr_list[0:13]
         self.start1 = int(self.start1)
         self.end1 = int(self.end1)
         self.start2 = int(self.start2)
         self.end2 = int(self.end2)
         self.n_supp = int(self.n_supp)
+        self.score = float(self.score)
 
     def mean1(self):
         return int((self.start1 + self.end1)/2)
@@ -38,7 +39,7 @@ class PairedBkCand:
         return int((self.start2 + self.end2)/2)
 
     def output(self):
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%s\t%s\t%d' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.endtype1, self.endtype2, self.n_supp) 
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%s\t%s\t%d\t%f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.endtype1, self.endtype2, self.n_supp, self.score, self.info) 
         return outstring
 
     def tid1(self, chrname2tid):
@@ -57,7 +58,12 @@ class QuantifiedBKCand:
 
     def __init__(self, attr_list):
 
-        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2 = attr_list[0:28]
+        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2  = attr_list[0:6]
+        self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2 = attr_list[6:11]
+        self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol = attr_list[11:16]
+        self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp = attr_list[16:23]
+        self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2 = attr_list[23:28]
+        self.n_readpair_support = attr_list[28] 
 
         self.tid1 = int(self.tid1)
         self.start1 = int(self.start1)
@@ -81,10 +87,11 @@ class QuantifiedBKCand:
         self.end2_logp = float(self.end2_logp)
         self.num_fragment_support = int(self.num_fragment_support)
         self.svlength = str(self.svlength)
-
+        self.n_readpair_support = int(self.n_readpair_support)
 
     def attr_list(self):
-        return [self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2] 
+
+        return [self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2, self.n_readpair_support] 
 
     def output_svcall(self):
 
@@ -93,12 +100,13 @@ class QuantifiedBKCand:
 
     def output(self):
 
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%s\t%d\t%d' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2)
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%s\t%d\t%d\t%d' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2, self.n_readpair_support)
 
         return outstring
 
     def output_core(self):
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%s\t%s\t%.2f\t%.2f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.support_barcodes.rstrip(','))
+
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\t%f\t%f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.support_barcodes)
         return outstring
 
     def frm_id_list1(self):

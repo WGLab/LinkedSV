@@ -14,17 +14,58 @@ arg = sys.argv[1:]
 def main():
 
     args, dbo_args, endpoint_args = parse_user_arguments()
-    estimate_global_distribution(args, dbo_args, endpoint_args)
+    estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_file)
     return
 
-def estimate_global_distribution(args, dbo_args, endpoint_args):
+def read_global_distribution_file(args, endpoint_args):
+
+    global_dist_fp = open(args.global_distribution_file, 'r')
+    while 1:
+        line = global_dist_fp.readline()
+        if not line: break
+        line = line.strip().split(tab)
+        key, value = line[0:2]
+
+        if key == 'num_reads_genome': args.num_reads_genome = int(value)
+        elif key == 'num_reads_ontarget': args.num_reads_ontarget = int(value)
+        elif key == 'num_reads_offtarget': args.num_reads_offtarget = int(value)
+        elif key == 'min_frag_length': endpoint_args.min_frag_length = int(value)
+        elif key == 'fragment_length_lmda': args.fragment_length_lmda = float(value)
+        elif key == 'median_fragment_length': args.median_fragment_length = float(value)
+        elif key == 'mean_fragment_length': args.mean_fragment_length = float(value)
+        elif key == 'gap_distance_lmda': args.gap_distance_lmda = float(value)
+        elif key == 'gap_distance500': args.gap_distance500 = float(value)
+        elif key == 'gap_distance750': args.gap_distance750 = float(value)
+        elif key == 'gap_distance900': args.gap_distance900 = float(value)
+        elif key == 'gap_distance950': args.gap_distance950 = float(value)
+        elif key == 'gap_distance990': args.gap_distance990 = float(value)
+        elif key == 'gap_distance999': args.gap_distance999 = float(value)
+        elif key == 'mean_num_fragment_per_bcd': args.mean_num_fragment_per_bcd = float(value)
+        elif key == 'median_num_fragment_per_bcd': args.median_num_fragment_per_bcd = float(value)
+        elif key == 'total_num_fragment': args.total_num_fragment = int(value)
+        elif key == 'total_num_bcd': args.total_num_bcd = int(value)
+        elif key == 'read_per_bp_genome': args.read_per_bp_genome = float(value)
+        elif key == 'genome_length': args.genome_length = int(value)
+        elif key == 'target_region_length': args.target_region_length = int(value)
+        elif key == 'read_per_bp_ontarget': args.read_per_bp_ontarget = float(value)
+        elif key == 'read_per_bp_offtarget': args.read_per_bp_offtarget = float(value)
+        elif key == 'gap_distance_cutoff': args.gap_distance_cutoff = float(value)
+
+    global_dist_fp.close()
+    return
+
+def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_file):
+
+    if args.run_from_begining == False and check_file_exists(args.global_distribution_file) == True:
+        myprint ('global distribution file existed, skipped calculating distribution parameters')
+        read_global_distribution_file(args, endpoint_args)
+        args.global_distribution_calculated = True
+        return
 
     myprint('calculating distribution parameters')
     global_dist_fp = open(args.global_distribution_file, 'w')
-
-    args.num_reads_genome = line_count(args.bcd_file)
+    args.num_reads_genome = line_count(endpoint_args.bcd21_file)
     global_dist_fp.write('num_reads_genome\t%d\n' % args.num_reads_genome)
-    myprint ('total number of reads: %d' % args.num_reads_genome) 
 
     if args.is_wgs == False:
         ### get reads in target region ###
@@ -33,30 +74,29 @@ def estimate_global_distribution(args, dbo_args, endpoint_args):
 
         bed2tidbed_file(target_region_bed_file, args.chrname2tid, target_region_tidbed_file)
 
-        cmd = args.bedtools + ' intersect -wa -u -a ' + args.bcd_file + ' -b ' + target_region_tidbed_file +  ' > ' + args.bcd_file_of_target_region
+        cmd = args.bedtools + ' intersect -wa -u -a ' + endpoint_args.bcd21_file + ' -b ' + target_region_tidbed_file +  ' > ' + endpoint_args.bcd_file_of_target_region
         os.system(cmd)
-        if os.path.getsize(args.bcd_file_of_target_region) <= 0:
+        if os.path.getsize(endpoint_args.bcd_file_of_target_region) <= 0:
             myprint('failed to get reads in target region')
             sys.exit()
 
-        args.num_reads_ontarget  = line_count(args.bcd_file_of_target_region)
+        args.num_reads_ontarget  = line_count(endpoint_args.bcd_file_of_target_region)
         args.num_reads_offtarget = args.num_reads_genome - args.num_reads_ontarget
         global_dist_fp.write('num_reads_ontarget\t%d\n' % args.num_reads_ontarget)
         global_dist_fp.write('num_reads_offtarget\t%d\n' % args.num_reads_offtarget)
 
-        myprint ('number of reads in target region: %d' % args.num_reads_genome)
-        myprint ('number of reads in off-target region: %d' % args.num_reads_ontarget) 
+    get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp, target_bcd22_file)
 
-    get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp)
-
-    global_dist_fp.close()
     cut_quantile = 0.99
     if args.is_wgs:
         args.gap_distance_cutoff = math.log(1.0 - cut_quantile) / math.log(1.0 - args.read_per_bp_genome)
     else:
-        args.gap_distance_cutoff = 20 * 1000
-   
+        args.gap_distance_cutoff = 30 * 1000.0
+    if args.user_defined_gap_distance_cut_off > 500: 
+        args.gap_distance_cutoff = args.user_defined_gap_distance_cut_off
+    global_dist_fp.write('gap_distance_cutoff\t%.10f\n' % args.gap_distance_cutoff)
     args.global_distribution_calculated = True
+    global_dist_fp.close()
     return
 
 def fit_geometric_distribution(length_list, readpair=True):
@@ -75,10 +115,11 @@ def fit_geometric_distribution(length_list, readpair=True):
     pmedian = np.median(p_list)
     return pmedian
     
-def get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp):
+def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, target_bcd22_file):
 
     frm_length_list = list()
-    bcd22_fp = open(endpoint_args.tmpbcd22_file, 'r')
+    myprint ('calculating fragment parameters from file: %s' % target_bcd22_file)
+    bcd22_fp = open(target_bcd22_file, 'r')
     while 1:
         line = bcd22_fp.readline()
         if not line: break
@@ -87,20 +128,24 @@ def get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp):
         frm = Fragment(line)
         frm_length_list.append(frm.length)
 
-    N5_length, N25_length, N50_length, N75_length, N95_length, total_length = calculate_length_statistics(frm_length_list)
-    myprint('N5, N25, N50, N75, N95 fragment lengths are %d, %d, %d, %d, %d' % (N5_length, N25_length, N50_length, N75_length, N95_length))
+    N50_length, N95_length, N98_length, N99_length, total_length = calculate_length_statistics(frm_length_list)
+
+    global_dist_fp.write('N50_fragment_length\t%d\n' % N50_length)
+    global_dist_fp.write('N95_fragment_length\t%d\n' % N95_length)
+    global_dist_fp.write('N98_fragment_length\t%d\n' % N98_length)
+    global_dist_fp.write('N99_fragment_length\t%d\n' % N99_length)
+
     if args.is_wgs: 
-        endpoint_args.min_frag_length = max(N95_length, endpoint_args.min_frag_length)
+        endpoint_args.min_frag_length = max(N95_length, 5000)  # at least 5000 for WGS data 
     else: 
-        endpoint_args.min_frag_length = 0
+        endpoint_args.min_frag_length = max(N95_length, 2000)  # at least 2000 for WES data
 
     if args.user_defined_min_frag_length > 0:
-        endpoint_args.min_frag_length = args.user_defined_min_frag_length
+        endpoint_args.min_frag_length = max(args.user_defined_min_frag_length, 500) # min fragment length should be more than 500 even user defined a smaller value
 
-    global_dist_fp.write('endpoint_args.min_frag_length\t%d\n' % endpoint_args.min_frag_length)
-
+    global_dist_fp.write('min_frag_length\t%d\n' % endpoint_args.min_frag_length)
     args.fragment_length_lmda = fit_geometric_distribution(frm_length_list, readpair = False) 
-    global_dist_fp.write('fragment_length_lmda\t%.20f\n' % args.fragment_length_lmda)
+    global_dist_fp.write ('fragment_length_lmda\t%.20f\n' % args.fragment_length_lmda)
 
     bcd22_fp.seek(0, 0)
 
@@ -130,10 +175,8 @@ def get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp):
 
     args.median_fragment_length = np.median(frm_length_list)
     args.mean_fragment_length = np.mean(frm_length_list) 
-    myprint('median and mean fragment lengths are %d, %d' % (args.median_fragment_length, args.mean_fragment_length))
-    global_dist_fp.write('median_fragment_length\t%d\n' % args.median_fragment_length)
-    global_dist_fp.write('mean_fragment_length\t%d\n' % args.mean_fragment_length)
-
+    global_dist_fp.write('median_fragment_length\t%.10f\n' % args.median_fragment_length)
+    global_dist_fp.write('mean_fragment_length\t%.10f\n' % args.mean_fragment_length)
     args.gap_distance_lmda = fit_geometric_distribution(total_gap_distance_list, readpair=True) 
     global_dist_fp.write('gap_distance_lmda\t%.20f\n' % args.gap_distance_lmda)
    
@@ -146,12 +189,12 @@ def get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp):
     args.gap_distance990 = quantile_nparray[4] 
     args.gap_distance999 = quantile_nparray[5]
 
-    global_dist_fp.write('gap_distance500\t%d\n' % args.gap_distance500)
-    global_dist_fp.write('gap_distance750\t%d\n' % args.gap_distance750)
-    global_dist_fp.write('gap_distance900\t%d\n' % args.gap_distance900)
-    global_dist_fp.write('gap_distance950\t%d\n' % args.gap_distance950)
-    global_dist_fp.write('gap_distance990\t%d\n' % args.gap_distance990)
-    global_dist_fp.write('gap_distance999\t%d\n' % args.gap_distance999)
+    global_dist_fp.write('gap_distance500\t%.10f\n' % args.gap_distance500)
+    global_dist_fp.write('gap_distance750\t%.10f\n' % args.gap_distance750)
+    global_dist_fp.write('gap_distance900\t%.10f\n' % args.gap_distance900)
+    global_dist_fp.write('gap_distance950\t%.10f\n' % args.gap_distance950)
+    global_dist_fp.write('gap_distance990\t%.10f\n' % args.gap_distance990)
+    global_dist_fp.write('gap_distance999\t%.10f\n' % args.gap_distance999)
 
     num_barcode = len(bcd_count_dict) 
     if num_barcode < 1:
@@ -166,8 +209,9 @@ def get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp):
     args.median_num_fragment_per_bcd = np.median(num_fragment_per_bcd_list)
     args.total_num_fragment = total_num_fragment
     args.total_num_bcd = num_barcode
-    global_dist_fp.write('mean_num_fragment_per_bcd\t%f\n' % args.mean_num_fragment_per_bcd)
-    global_dist_fp.write('median_num_fragment_per_bcd\t%f\n' % args.median_num_fragment_per_bcd)
+
+    global_dist_fp.write('mean_num_fragment_per_bcd\t%.10f\n' % args.mean_num_fragment_per_bcd)
+    global_dist_fp.write('median_num_fragment_per_bcd\t%.10f\n' % args.median_num_fragment_per_bcd)
     global_dist_fp.write('total_num_fragment\t%d\n' % args.total_num_fragment)
     global_dist_fp.write('total_num_bcd\t%d\n' % args.total_num_bcd)
 
@@ -195,21 +239,19 @@ def calculate_length_statistics(length_list):
     total_length = float(sum(length_list))
     sum_length = 0
 
-    N5_length = -1
-    N25_length = -1
     N50_length = -1 
-    N75_length = -1
     N95_length = -1
+    N98_length = -1
+    N99_length = -1
 
     for length in length_list:
         sum_length += length
-        if N5_length  == -1 and sum_length > 0.05 * total_length: N5_length  = length
-        if N25_length == -1 and sum_length > 0.25 * total_length: N25_length = length
         if N50_length == -1 and sum_length > 0.50 * total_length: N50_length = length
-        if N75_length == -1 and sum_length > 0.75 * total_length: N75_length = length
         if N95_length == -1 and sum_length > 0.95 * total_length: N95_length = length
+        if N98_length == -1 and sum_length > 0.98 * total_length: N98_length = length
+        if N99_length == -1 and sum_length > 0.99 * total_length: N99_length = length
 
-    return N5_length, N25_length, N50_length, N75_length, N95_length, total_length
+    return N50_length, N95_length, N98_length, N99_length, total_length
 
 
 def calculate_gap_distance_statistics(total_gap_distance_list):

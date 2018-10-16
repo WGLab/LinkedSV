@@ -2,17 +2,14 @@
 
 import subprocess
 from my_utils import *
-from count_barcode_overlap import *
-from peak_calling1 import *
-from peak_calling2 import *
-from cluster_read import *
-from cal_endpoint_density import * 
-from cal_expected_overlap_value import *
+from extract_weird_reads import *
+from cluster_reads import *
+from get_high_coverage_regions import *
 from global_distribution import *
 from find_paired_bk import *
-from refine_breakpoints import *
-from quantify2bkcand3 import *
+from quantify2bkcand import *
 from merge_quantified_calls import *
+from filter_calls import *
 
 
 def main():
@@ -21,93 +18,47 @@ def main():
 
     gc.enable()
 
-    ## extract barcode information from bam file ##
-    if args.run_from_begining == False and check_file_exists(args.bcd_file) == True:
-        myprint('bcd file existed, skipped extracting barcode information from bam')
-    else:
-        extract_barcode_from_bam(args)
+    args.global_distribution_calculated = False
 
-    ## scan for breakpoint candidates ##
-    method1(args, dbo_args, endpoint_args)
-    gc.collect()
+    extract_barcode_from_bam(args, endpoint_args)
 
-    method2(args, dbo_args, endpoint_args)
-    gc.collect()
+    extract_weird_reads(args, dbo_args, endpoint_args)
+
+    detect_increased_fragment_ends(args, dbo_args, endpoint_args)
 
     ## find paired breakpoints ##
-    estimate_global_distribution(args, dbo_args, endpoint_args)
+    if args.global_distribution_calculated == False: estimate_global_distribution(args, dbo_args, endpoint_args, endpoint_args.bcd22_file)
+
+    task = 'searching for paired breakpoints'
     if args.run_from_begining == False and check_file_exists(args.bk_cand_pair_file) == True:
-        myprint('bk_cand_pair file existed, skipped finding paired breakpoints')
+        myprint('paired breakpoint file existed, skipped %s' % (task))
     else:
+        myprint(task)
         find_paired_bk(args, dbo_args, endpoint_args)
         gc.collect()
-    
+
     ## quantification ##
+    task = 'quantifying SV candidates'
     if args.run_from_begining == False and check_file_exists(args.quantified_bk_pair_file) == True:
-        myprint('quantified_bk_pair file existed, skipped quantification of sv candidates')
+        myprint('quantified SV file existed, skipped %s' % (task))
     else:
+        myprint(task)
         quantify2bkcand(args, dbo_args, endpoint_args)
         gc.collect()
 
-    ## refine breakpoints ##
-    #if args.run_from_begining == False and check_file_exists(args.refinedbedpe_file) == True:
-    #    myprint('refined bedpe file existed, skipped refinement of sv candidates')
-    #else:
-    #    refine_breakpoints(args, dbo_args, endpoint_args)
-    #    gc.collect()
-
     ## merge calls ##
+    task = 'merging SV candidates'
     if args.run_from_begining == False and check_file_exists(args.merged_bedpe_file) == True:
-        myprint('merged bedpe file existed, skipped merging sv candidates')
+        myprint('merged bedpe file existed, skipped %s' % (task))
     else:
+        myprint(task)
         merge_quantified_calls(args, dbo_args, endpoint_args)
         gc.collect()
 
-    if check_file_exists(args.merged_bedpe_file):
-        remove_file(args.bcd_file)
-        remove_file(endpoint_args.bcd21_file)
-        remove_file(endpoint_args.tmpbcd22_file)
-        remove_file(endpoint_args.bcd22_file)
-        remove_file(args.bcd_file_of_target_region)
-        remove_file(args.args_file)
-        remove_file(args.global_distribution_file)
+    ## filter calls ##
 
-        remove_file(args.node33_file) 
-        remove_file(args.node35_file) 
-        remove_file(args.node53_file) 
-        remove_file(args.node55_file) 
-        remove_file(args.node_cluster33_file)
-        remove_file(args.node_cluster53_file)
-        remove_file(args.node_cluster35_file)
-        remove_file(args.node_cluster55_file)
+    filter_calls(args, dbo_args, endpoint_args)
 
-        remove_file(args.bk_cand_pair_file)
-        remove_file(args.quantified_bk_pair_file)
-    return
-
-def method1(args, dbo_args, endpoint_args):
-
-    if args.all_to_all == True: return
-    if args.only_method2 == True:
-        myprint ('skipped method1')
-        return
-
-    myprint ('start running breakpoint detection method 1')
-    detect_decreased_barcode_overlap(args, dbo_args, endpoint_args)
-    gc.collect()
-    myprint ('finished breakpoint detection method 1')
-    return
-
-def method2(args, dbo_args, endpoint_args): 
-
-    if args.only_method1 == True:
-        myprint ('skipped method2')
-        return 
-
-    myprint ('start breakpoint detection method 2')
-    detect_increased_fragment_ends (args, dbo_args, endpoint_args)
-    myprint ('finished breakpoint detection method 2')
-        
     return
 
 def detect_decreased_barcode_overlap (args, dbo_args, endpoint_args):
@@ -169,69 +120,61 @@ def detect_decreased_barcode_overlap (args, dbo_args, endpoint_args):
 def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
 
     gc.enable()
-    ### 1 sorting bcd file | output file: bcd21
-    if args.run_from_begining == False and check_file_exists(endpoint_args.bcd21_file):
-        myprint ('bcd21 file existed, skipped sorting')
-    else:
-        myprint ('sorting barcode...')
-        cmd = args.sort_barcode + ' ' + args.bcd_file + ' ' + args.out_prefix + ' ' + args.faidx_file
-        os.system (cmd)
-        myprint ('finished sorting barcode...')
 
-    gc.collect()
+    ### 1 clustering reads | output file: bcd22 file
+    task = 'clustering reads'
 
-    ### 2 clustering fragments | output file: bcd22 file
-    if args.run_from_begining == False and check_file_exists(endpoint_args.bcd22_file):
-        myprint ('bcd22 file existed, skipped clustering reads')
+    if args.run_from_begining == False and check_file_exists (endpoint_args.bcd22_file):
+        myprint('bcd22 file existed, skipped %s' % (task))
     else:
-        myprint ('clustering reads...')
+        myprint(task)
         cluster_reads(args, dbo_args, endpoint_args) 
-        myprint ('finished clustering reads...')
     
     gc.collect()
 
-    ### 3 estimate_global_distribution
+    ### 2 searching for extremely high coverage region  
 
-    estimate_global_distribution(args, dbo_args, endpoint_args)
+    task = 'searching for extremely high coverage region'
+    if args.run_from_begining == False and check_file_exists (endpoint_args.barcode_cov_file):
+        myprint ('high coverage region file existed, skipped %s' % (task))
+    else:
+        myprint(task)
+        get_high_coverage_regions(args, dbo_args, endpoint_args) 
+
+    ### 3 estimating distribution parameters
+
+    if args.global_distribution_calculated == False: 
+        estimate_global_distribution(args, dbo_args, endpoint_args, endpoint_args.bcd22_file)
+
     output_arguments2file(args, dbo_args, endpoint_args)
+
     gc.collect()
 
-    if args.all_to_all == True: return
+    return
 
-    ### 4 calculate endpoint density  | output file: endpoints_density file
-    if args.run_from_begining == False and check_file_exists (endpoint_args.endpoints_density_file):
-        myprint ('endpoints_density file existed, skipped calculating endpoint density')
-    else:
-        myprint ('calculating endpoint density...')
-        cal_endpoint_density(args, dbo_args, endpoint_args)
+def extract_barcode_from_bam (args, endpoint_args):
     
-    gc.collect()
+    ## sort bam by barcode ##
 
-    ### 4 peak calling for endpoints | output file: bk.bed file
-    if args.run_from_begining == False and check_file_exists(endpoint_args.bk_file):
-        myprint ('endpoint bk file existed, skipped peak calling')
+    cmd = '%s %s | %s sort -m 2G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
+
+    if args.run_from_begining == False and check_file_exists(args.sortbx_bam):
+        myprint('File: %s existed, skipped sorting bam by barcode' % args.sortbx_bam)
     else:
-        myprint('start peak calling for endpoints')
-        peak_calling2(args, dbo_args, endpoint_args)
-        myprint('finished peak calling for endpoints')
-
-    gc.collect()
-    return 
-
-def extract_barcode_from_bam (args):
-    
-    bcd_file = args.bcd_file
-    stat_file = args.stat_file
-
-    cmd = args.extract_barcode + ' ' +  args.bam + ' ' + bcd_file + ' ' + stat_file + ' ' + str(args.min_mapq) + endl
-
-    if args.run_from_begining == False and check_file_exists(bcd_file) and check_file_exists(stat_file):
-        myprint('bcd file existed: %s, skipped extracting barcode from bam' % bcd_file)
-    else:
-        myprint('extracting barcode from bam file...')
+        myprint('sorting bam file by barcode')
         myprint(cmd)
         os.system(cmd)
-        myprint('finished extracting barcode from bam file...')
+
+
+    ## extract barcode info ##
+    cmd = args.extract_barcode + ' ' +  args.sortbx_bam + ' ' + endpoint_args.bcd21_file + ' ' + args.stat_file + ' ' + str(args.min_mapq) + endl
+
+    if args.run_from_begining == False and check_file_exists(args.stat_file) and check_file_exists(endpoint_args.bcd21_file):
+        myprint('File: %s existed, skipped extracting barcode from bam' % endpoint_args.bcd21_file)
+    else:
+        myprint('extracting barcode info from bam file')
+        myprint(cmd)
+        os.system(cmd)
 
     return
 

@@ -9,9 +9,16 @@ import my_utils
 class global_parameter:
     def __init__(self, parser_args):
 
+        self.root_dir = os.path.split(os.path.abspath(__file__))[0]
+
         self.input_bam  = os.path.abspath(parser_args.bam)
         self.out_dir    = os.path.abspath(parser_args.out_dir)
         self.ref_fa     = os.path.abspath(parser_args.ref) 
+
+        self.ref_version = parser_args.ref_version
+        self.gap_region_bed_file = parser_args.gap_region_bed
+        self.black_region_bed_file = parser_args.black_region_bed
+        self.low_mapq_region_bed_file = ''
 
         self.min_mapq = parser_args.min_mapq
         self.n_thread = parser_args.n_thread
@@ -20,29 +27,38 @@ class global_parameter:
         self.bedtools = parser_args.bedtools
 
         self.is_wgs             = parser_args.is_wgs
-        self.all_to_all         = parser_args.all_to_all
         self.target_region_bed  = parser_args.target_region
 
-        self.debug             = parser_args.debug
-        self.run_from_begining = parser_args.run_from_begining
-        self.only_method1      = parser_args.only_method1
-        self.only_method2      = parser_args.only_method2
+        self.run_from_begining = True
+        self.only_method1      = False
+        self.only_method2      = True
 
         self.bam_name = os.path.split(self.input_bam)[1]
         self.out_prefix = os.path.join(self.out_dir, self.bam_name)
         self.bam = self.input_bam
 
+        self.sortn_bam = self.out_prefix + '.sortn.bam' 
+        self.sortbx_bam = self.out_prefix + '.sortbx.bam' 
+
+        self.sortn_bam_core_file = self.out_prefix + '.sortn.bam.coreinfo' 
+        self.weired_reads_file  = self.out_prefix + '.sortn.bam.weired_reads' 
+        
+        self.alt_chr_name_set = set()
+        self.alt_tid_set = set()
+
         self.faidx_file = self.ref_fa + '.fai'
 
-        self.root_dir = os.path.split(os.path.abspath(__file__))[0]
-        self.extract_barcode = os.path.join(self.root_dir, 'extract_barcode')
-        self.sort_barcode = os.path.join(self.root_dir, 'sort_barcode')
+        self.extract_barcode = os.path.join(self.root_dir, 'extract_barcode_info')
+        self.remove_sparse_nodes = os.path.join(self.root_dir, 'remove_sparse_nodes');
+        self.output_bam_coreinfo = os.path.join(self.root_dir, 'output_bam_coreinfo');
+
+        self.alt_ctg_file  = os.path.join(self.root_dir, 'black_lists/alternative_contigs.txt')
 
         self.user_defined_min_frag_length = parser_args.min_fragment_length
+        self.user_defined_gap_distance_cut_off = parser_args.gap_distance_cut_off
 
-        self.bcd_file = self.out_prefix + '.bcd' 
+        self.bcd_file  = self.out_prefix + '.bcd' 
         self.args_file = self.out_prefix + '.arguments' 
-        self.bcd_file_of_target_region = self.out_prefix + '.on_target.bcd'
 
         self.stat_file = self.out_prefix + '.barcode_statistics' 
 
@@ -57,6 +73,10 @@ class global_parameter:
         self.node55_file = self.out_prefix + '.node55'
         self.node53_file = self.out_prefix + '.node53'
         self.node35_file = self.out_prefix + '.node35'
+        self.node33_candidate_file = self.out_prefix + '.node33.candidates'
+        self.node55_candidate_file = self.out_prefix + '.node55.candidates'
+        self.node53_candidate_file = self.out_prefix + '.node53.candidates'
+        self.node35_candidate_file = self.out_prefix + '.node35.candidates'
         self.n_node33 = None
 
         self.node_cluster33_file = self.out_prefix + '.node_cluster33'
@@ -67,7 +87,8 @@ class global_parameter:
         self.bk_cand_pair_file = self.out_prefix + '.bk_cand_pairs'
         self.quantified_bk_pair_file = self.out_prefix + '.qbkpair.bedpe'
         self.refinedbedpe_file = self.out_prefix + '.qbkpair.refined.bedpe'
-        self.merged_bedpe_file = self.out_prefix + '.svcalls.bedpe'
+        self.merged_bedpe_file = self.out_prefix + '.merged_svcalls.bedpe'
+        self.filter_bedpe_file = self.out_prefix + '.filtered_svcalls.bedpe'
 
         self.chrname2tid = None
         self.tid2chrname = None
@@ -108,7 +129,12 @@ class global_parameter:
         self.median_fragment_length = 50000
         self.mean_fragment_length = 72000   
 
-        self.min_support_fragments = 5
+        if parser_args.min_supp_barcodes > 3:
+            self.min_support_fragments = parser_args.min_supp_barcodes
+        elif parser_args.min_supp_barcodes > 0 and parser_args.min_supp_barcodes <= 3:
+            self.min_support_fragments = 3
+        else:
+            self.min_support_fragments = 15
 
     def copy(self): 
         return copy.deepcopy(self)
@@ -165,7 +191,12 @@ class endpoint_parameter:
         self.prefix = global_args.out_prefix + '.endpoints'
         self.bcd21_file = global_args.out_prefix + '.bcd21' # sorting results 
         self.tmpbcd22_file = global_args.out_prefix + '.tmpbcd22'
+        self.bcd_file_of_target_region = global_args.out_prefix + '.on_target.bcd21'
         self.bcd22_file = global_args.out_prefix + '.bcd22' # result of clustering (fragment file)
+        self.bcd23_file = global_args.out_prefix + '.bcd23' # candidate fragments (long) 
+        self.bcd24_file = global_args.out_prefix + '.bcd24' # candidate fragments (short) 
+        self.barcode_cov_file = global_args.out_prefix + '.barcode_cov.bed'
+        self.high_cov_file = global_args.out_prefix + '.high_cov.bed'
         self.bk_file = self.prefix + '.bk.bed'
         self.endpoints_density_file = global_args.out_prefix + '.endpoints_density' 
 
@@ -219,14 +250,18 @@ def check_arguments(args):
         my_utils.myprint("ERROR! extract_barcode does not exist!")
         sys.exit()
 
-    if os.path.exists(args.sort_barcode) == False:
-        my_utils.myprint ("ERROR! sort_barcode does not exist!")
-        sys.exit()
-
     if args.is_wgs == False and os.path.exists(args.target_region_bed) == False:
         my_utils.myprint ("ERROR! target region bed is required if --targeted is specified. If you don't have this file, please specify --wgs instead")
         sys.exit()
 
+    if args.ref_version == 'hg19':
+        args.gap_region_bed_file      = os.path.join(args.root_dir, 'black_lists/hg19_gap.bed') 
+        args.black_region_bed_file    = os.path.join(args.root_dir, 'black_lists/hg19_black_list.bed')
+        args.low_mapq_region_bed_file = os.path.join(args.root_dir, 'black_lists/hg19_low_mapq_regions.bed')
+    elif args.ref_version == 'b37':
+        args.gap_region_bed_file      = os.path.join(args.root_dir, 'black_lists/b37_gap.bed') 
+        args.black_region_bed_file    = os.path.join(args.root_dir, 'black_lists/b37_black_list.bed')
+        args.low_mapq_region_bed_file = os.path.join(args.root_dir, 'black_lists/b37_low_mapq_regions.bed')
 
     return
 
@@ -234,36 +269,36 @@ def parse_user_arguments():
 
     parser = argparse.ArgumentParser(description='Detection of SVs from linked-read sequencing data')
     ### required arguments ###
-    parser.add_argument('-i', '--bam', required = True, metavar = 'input.sorted.bam', type = str, help = 'sorted bam file as input')
+    parser.add_argument('-i', '--bam', required = True, metavar = 'input.sorted.bam', type = str, help = 'input bam file (should be sorted by position')
     parser.add_argument('-d', '--out_dir', required = True, metavar = 'out_directory', type = str, help = 'output directory')
     parser.add_argument('-r', '--ref', required = True, metavar = 'ref.fasta', type = str, help ='reference FASTA file')
 
     ### optional arguments ###
-    parser.add_argument('-q', '--min_mapq', required = False, metavar = 'min_map_qual', type = int, default = 20, help ='minimal map quality of reads used for analysis (default: 20)')
+    parser.add_argument('-v', '--ref_version', required = False, metavar = 'reference_version', type = str, default = '', help ='version of reference fasta file. Current supported versions are: hg19, b37')
+    parser.add_argument('--gap_region_bed', required = False, metavar = 'gap_region.bed', type = str, default = '', help ='reference gap region in bed format, required if --ref_version is not specified')
+    parser.add_argument('--black_region_bed', required = False, metavar = 'black_region.bed', type = str, default = '', help ='black region in bed format, required if --ref_version is not specified')
     parser.add_argument('-t', '--n_thread', required = False, metavar = 'num_thread', type = int, default = 1, help ='number of threads (default: 1)')
-
-    parser.add_argument('--min_fragment_length', metavar = 'min_fragment_length', required = False, type = int, default = 0, help ='minimal fragment length considered for SV calling')
-
+    parser.add_argument('-q', '--min_mapq', required = False, metavar = 'min_map_qual', type = int, default = 20, help ='minimal map quality of reads used for analysis (default: 20)')
+    parser.add_argument('--min_fragment_length', metavar = 'min_fragment_length', required = False, type = int, default = -1, help ='minimal fragment length considered for SV calling')
+    parser.add_argument('--min_supp_barcodes', metavar = 'min_supporting_barcodes', required = False, type = int, default = -1, help ='minimal number of shared barcodes between two SV breakpoints')
     parser.add_argument('--samtools', required = False, metavar = 'path/to/samtools', type = str, default = 'samtools', help ='path to samtools (default: find in environmental path)')
     parser.add_argument('--bedtools', required = False, metavar = 'path/to/bedtools', type = str, default = 'bedtools', help ='path to bedtools (default: find in environmental path)')
-
     parser.add_argument('--wgs', dest='is_wgs', action='store_true', help='the input is whole-genome sequencing data')
     parser.add_argument('--targeted', dest='is_wgs', action='store_false', help='the input is targeted region sequencing data (such as WES)')
     parser.set_defaults(is_wgs = True)
     parser.add_argument('--target_region', required = False, metavar = 'target_region.bed', type = str, default = '', help ='bed file of target regions (required if --targeted is specified)')
-
-    ## debug arguments ###
-    parser.add_argument('--debug', dest='debug', action='store_true', help='run in debug mode')
-    parser.set_defaults(debug = False)
-    parser.add_argument('--run_from_begining', dest = 'run_from_begining', action='store_true', default=False, help ='run from begining (default: false)')
-    parser.add_argument('--only_method1', dest = 'only_method1', action='store_true', default = False, help ='only run method 1 (default: False)')
-    parser.add_argument('--only_method2', dest = 'only_method2', action='store_true', default = False, help ='only run method 2 (default: False)')
-    parser.add_argument('--all_to_all', dest = 'all_to_all', action='store_true', default = False, help ='compare all genomic loci')
+    parser.add_argument('--gap_distance_cut_off', required = False, metavar = 'gap_distance_cut_off', type = int, default = -1, help ='max distance between two reads in a HMW DNA molecule (default: automatically determined)')
 
     input_args = parser.parse_args()
 
     args = global_parameter(input_args)
+
     args.tid2chrname, args.chrname2tid = my_utils.get_chrnames(args.faidx_file)
+
+    args.alt_chr_name_set = my_utils.read_alternative_contig_file(args.alt_ctg_file)
+
+    args.alt_tid_set = my_utils.get_alternative_tid_set(args.alt_ctg_file, args.faidx_file)
+
     check_arguments(args)
 
     dbo_args = dbo_parameter(args)

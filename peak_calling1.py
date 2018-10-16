@@ -61,7 +61,6 @@ def output(np_log_effective_y):
     outfp.close()
 
 def peak_calling_bcd13_file(tid, bcd13_file, min_distance, output_bk_candidate_fp):
-    debug = 1 #debug 
     myprint('peak calling for: ' + bcd13_file)
     bcd13_line_list, xlist, ylist, effective_ylist = read_bcd13_file(bcd13_file)
     npy = np.array(ylist) 
@@ -69,10 +68,6 @@ def peak_calling_bcd13_file(tid, bcd13_file, min_distance, output_bk_candidate_f
     
     np_log_effective_y = np.log(effective_ylist)
 
-    ##debug##
-    if debug:
-        output(np_log_effective_y)
-    ##debug##
 
     logymean = np.mean(np_log_effective_y)
     logystd  = np.std(np_log_effective_y)

@@ -17,6 +17,7 @@ ChrList = ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9
 ChrSet = set(ChrList)
 FIX_LENGTH = int(1e10)
 
+debug = 1
 ##### system tools #####
 
 TimeFormat = '%m/%d/%Y %H:%M:%S'
@@ -25,6 +26,9 @@ def curr_time():
 
     return  '[' + datetime.now().strftime(TimeFormat) + '] '
 
+def deprint(string):
+    if debug: print (string)
+    return
 def myprint(string):
 
     process = psutil.Process(os.getpid())
@@ -80,14 +84,6 @@ def check_file_exists(input_file):
         return True
     else:
         return False
-
-def remove_file(input_file):
-    if os.path.isfile(input_file):
-        try:
-            os.remove(input_file)
-        except OSError as err:
-            myprint ('WARNING! cannot remove temporary file:%s' % input_file)
-    return
 
 def line_count(in_file):
     n = 0
@@ -231,3 +227,32 @@ def read_object_file(object_file, Classname, options = None):
     object_fp.close()
 
     return object_list
+
+def read_alternative_contig_file(alternative_contig_file):
+    alt_chr_name_set = set()
+    in_fp = open(alternative_contig_file, 'r')
+    while 1:
+        line = in_fp.readline()
+        if not line: break
+        line = line.strip()
+        alt_chr_name_set.add(line)
+
+    in_fp.close()
+    return alt_chr_name_set
+
+def get_alternative_tid_set(alternative_contig_file, faidx_file):
+    
+    alt_chr_name_set = read_alternative_contig_file(alternative_contig_file)
+    tid2chrname_list, chrname2tid_dict = get_chrnames(faidx_file) 
+    alt_tid_set = chrname_set_2_tid_set(alt_chr_name_set, chrname2tid_dict)
+
+    return alt_tid_set
+
+def chrname_set_2_tid_set(chrname_set, chrname2tid_dict): 
+    tid_set = set()
+    for chrname in chrname_set:
+        if chrname in chrname2tid_dict:
+            tid = chrname2tid_dict[chrname]
+            tid_set.add(tid)
+
+    return tid_set
