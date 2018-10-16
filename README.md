@@ -35,5 +35,5 @@ Examples:
 `python linkedsv.py -i input.bam -d path/to/output/dir/ -r ref.fasta -v ref_version -t num_threads`
 
 The ref.fasta file should be the same fasta file that was used for alignment. 
-`ref_version` is used to tell LinkedSV which black_list file and gap_region file should be used. Currently LinkedSV only support hg19 and b37, but we will soon support hg38. If `ref_version` is not specifed or you are using a different reference file, you need to generate these files by yourself and specify the `--gap_region_bed` and `--black_region_bed` parameters. 
+`ref_version` is used to tell LinkedSV which black_list file and gap_region file should be used. Currently LinkedSV only supports hg19 and b37, but we will soon support hg38. If `ref_version` is not specifed or you are using a different reference file, please generate these files by yourself and specify the `--gap_region_bed` and `--black_region_bed` parameters. 
 
