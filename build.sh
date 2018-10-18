@@ -1,4 +1,5 @@
 cd htslib-1.3/
+mkdir -p lib/
 make
 make check
 cp libhts.a ../lib/
