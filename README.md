@@ -15,7 +15,7 @@ sh build.sh
 ### Running LinkedSV
 
 ```
-usage: linkedsv.py [-h] -i input.sorted.bam -d out_directory -r ref.fasta
+usage: linkedsv.py [-h] -i input.bam -d out_directory -r ref.fasta
                    [-v reference_version] [--gap_region_bed gap_region.bed]
                    [--black_region_bed black_region.bed] [-t num_thread]
                    [-q min_map_qual]
