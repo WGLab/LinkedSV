@@ -32,3 +32,6 @@ The `input.bam` is the full path to the phased_possorted_bam.bam file generated 
 The `ref.fasta` file should be the same fasta file that was used for alignment. 
 `ref_version` is used to tell LinkedSV which black_list file and gap_region file should be used. Currently LinkedSV only supports hg19 and b37, but we will soon support hg38. If `ref_version` is not specifed or you are using a different reference file, please generate these files by yourself and specify the `--gap_region_bed` and `--black_region_bed` parameters. 
 
+If you use multiple threads, please make sure each thread can have 4GB memory.
+
+The output file is the prefix.filtered_svcalls.bedpe file. 
