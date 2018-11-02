@@ -6,6 +6,7 @@ from my_utils import *
 import numpy as np
 from fragment import *
 import math
+import subprocess
 
 tab  = '\t'
 endl = '\n'
@@ -52,6 +53,7 @@ def read_global_distribution_file(args, endpoint_args):
         elif key == 'gap_distance_cutoff': args.gap_distance_cutoff = float(value)
 
     global_dist_fp.close()
+
     return
 
 def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_file):
@@ -64,7 +66,10 @@ def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_fil
 
     myprint('calculating distribution parameters')
     global_dist_fp = open(args.global_distribution_file, 'w')
-    args.num_reads_genome = line_count(endpoint_args.bcd21_file)
+    ret = subprocess.check_output(['wc', '-l', endpoint_args.bcd21_file])
+    args.num_reads_genome = int(ret.split(' ')[0])
+    myprint('total number of reads in the genome is: %d' % args.num_reads_genome)
+    #args.num_reads_genome = line_count(endpoint_args.bcd21_file)
     global_dist_fp.write('num_reads_genome\t%d\n' % args.num_reads_genome)
 
     if args.is_wgs == False:
@@ -88,20 +93,23 @@ def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_fil
     get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp, target_bcd22_file)
 
     cut_quantile = 0.99
+
     if args.is_wgs:
         args.gap_distance_cutoff = math.log(1.0 - cut_quantile) / math.log(1.0 - args.read_per_bp_genome)
     else:
         args.gap_distance_cutoff = 30 * 1000.0
+
     if args.user_defined_gap_distance_cut_off > 500: 
         args.gap_distance_cutoff = args.user_defined_gap_distance_cut_off
     global_dist_fp.write('gap_distance_cutoff\t%.10f\n' % args.gap_distance_cutoff)
     args.global_distribution_calculated = True
     global_dist_fp.close()
+
     return
 
 def fit_geometric_distribution(length_list, readpair=True):
 
-    cdf1     = [90.0, 92.0, 94.0, 96.0, 98.0]
+    cdf1 = [90.0, 92.0, 94.0, 96.0, 98.0]
     if readpair == True:
         cdf2 = [95.0, 96.0, 97.0, 98.0, 99.0]
     else:
@@ -135,6 +143,8 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
     global_dist_fp.write('N98_fragment_length\t%d\n' % N98_length)
     global_dist_fp.write('N99_fragment_length\t%d\n' % N99_length)
 
+    myprint ('N95_fragment_length is: %d' % N95_length)
+
     if args.is_wgs: 
         endpoint_args.min_frag_length = max(N95_length, 5000)  # at least 5000 for WGS data 
     else: 
@@ -162,6 +172,7 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
         frm = Fragment(line)
         if frm.length < endpoint_args.min_frag_length: continue
         frm_length_list.append(frm.length)
+
         if frm.bcd not in bcd_count_dict: 
             bcd_count_dict[frm.bcd] = 1
         else:
@@ -169,7 +180,7 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
 
         total_num_reads_in_fragment += frm.num_reads
         total_num_fragment += 1
-        total_gap_distance_list += frm.gap_distances() 
+        if len(total_gap_distance_list) < int(1e7): total_gap_distance_list += frm.gap_distances() 
 
     bcd22_fp.close()
 
@@ -182,12 +193,14 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
    
     q = [50, 75, 90, 95, 99, 99.9]
     quantile_nparray = np.percentile(total_gap_distance_list, q)
+
     args.gap_distance500 = quantile_nparray[0] 
     args.gap_distance750 = quantile_nparray[1] 
     args.gap_distance900 = quantile_nparray[2] 
     args.gap_distance950 = quantile_nparray[3] 
     args.gap_distance990 = quantile_nparray[4] 
     args.gap_distance999 = quantile_nparray[5]
+
 
     global_dist_fp.write('gap_distance500\t%.10f\n' % args.gap_distance500)
     global_dist_fp.write('gap_distance750\t%.10f\n' % args.gap_distance750)
@@ -204,6 +217,7 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
     num_fragment_per_bcd_list = list() 
     for bcd in bcd_count_dict:
         num_fragment_per_bcd_list.append(bcd_count_dict[bcd])
+
     
     args.mean_num_fragment_per_bcd = np.mean(num_fragment_per_bcd_list)
     args.median_num_fragment_per_bcd = np.median(num_fragment_per_bcd_list)
