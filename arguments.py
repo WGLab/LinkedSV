@@ -262,6 +262,11 @@ def check_arguments(args):
         args.gap_region_bed_file      = os.path.join(args.root_dir, 'black_lists/b37_gap.bed') 
         args.black_region_bed_file    = os.path.join(args.root_dir, 'black_lists/b37_black_list.bed')
         args.low_mapq_region_bed_file = os.path.join(args.root_dir, 'black_lists/b37_low_mapq_regions.bed')
+    elif args.ref_version == 'hg38':
+        args.gap_region_bed_file      = os.path.join(args.root_dir, 'black_lists/hg38_gap.bed') 
+        args.black_region_bed_file    = os.path.join(args.root_dir, 'black_lists/hg38_black_list.bed')
+        args.low_mapq_region_bed_file = os.path.join(args.root_dir, 'black_lists/hg38_low_mapq_regions.bed')
+
 
     return
 
@@ -274,7 +279,7 @@ def parse_user_arguments():
     parser.add_argument('-r', '--ref', required = True, metavar = 'ref.fasta', type = str, help ='reference FASTA file')
 
     ### optional arguments ###
-    parser.add_argument('-v', '--ref_version', required = False, metavar = 'reference_version', type = str, default = '', help ='version of reference fasta file. Current supported versions are: hg19, b37')
+    parser.add_argument('-v', '--ref_version', required = False, metavar = 'reference_version', type = str, default = '', help ='version of reference fasta file. Current supported versions are: hg19, b37', 'hg38')
     parser.add_argument('--gap_region_bed', required = False, metavar = 'gap_region.bed', type = str, default = '', help ='reference gap region in bed format, required if --ref_version is not specified')
     parser.add_argument('--black_region_bed', required = False, metavar = 'black_region.bed', type = str, default = '', help ='black region in bed format, required if --ref_version is not specified')
     parser.add_argument('-t', '--n_thread', required = False, metavar = 'num_thread', type = int, default = 1, help ='number of threads (default: 1)')
