@@ -27,7 +27,11 @@ def main():
     detect_increased_fragment_ends(args, dbo_args, endpoint_args)
 
     ## find paired breakpoints ##
-    if args.global_distribution_calculated == False: estimate_global_distribution(args, dbo_args, endpoint_args, endpoint_args.bcd22_file)
+    if args.global_distribution_calculated == False: 
+        estimate_global_distribution(args, dbo_args, endpoint_args, endpoint_args.bcd22_file)
+        min_support_fragments = args.num_reads_genome / int(5e7) 
+        if args.min_support_fragments < min_support_fragments:
+            args.min_support_fragments = min_support_fragments
 
     task = 'searching for paired breakpoints'
     if args.run_from_begining == False and check_file_exists(args.bk_cand_pair_file) == True:

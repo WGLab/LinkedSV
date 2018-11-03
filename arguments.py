@@ -29,7 +29,7 @@ class global_parameter:
         self.is_wgs             = parser_args.is_wgs
         self.target_region_bed  = parser_args.target_region
 
-        self.run_from_begining = True
+        self.run_from_begining = False 
         self.only_method1      = False
         self.only_method2      = True
 
