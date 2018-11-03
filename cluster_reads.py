@@ -51,7 +51,7 @@ def cluster_reads(args, dbo_args, endpoint_args):
 
     ## first round ##
 
-    length_cut = 100 * 1000 # first round length cut is 100k
+    length_cut = 200 * 1000 # first round length cut is 200k
 
     weired_readname_dict = dict() 
 

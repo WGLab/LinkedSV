@@ -145,7 +145,7 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
 
     max_gap_distance = args.gap_distance_cutoff
 
-    myprint ('removing sparse nodes') 
+    myprint ('removing sparse nodes, min_support_fragments is %d' % args.min_support_fragments ) 
 
     cmd = '%s %s %s %d %s %d' % (args.remove_sparse_nodes, args.node33_file, args.node33_candidate_file, max_gap_distance, args.faidx_file, args.min_support_fragments) 
     os.system(cmd)
@@ -157,6 +157,7 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
     os.system(cmd)
 
     myprint ('clustering nodes, max distance for connecting two nodes is: %d' % max_gap_distance) 
+
     out_file = args.bk_cand_pair_file
     out_fp = open(out_file, 'w')
 

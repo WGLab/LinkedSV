@@ -95,12 +95,13 @@ def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_fil
     cut_quantile = 0.99
 
     if args.is_wgs:
-        args.gap_distance_cutoff = math.log(1.0 - cut_quantile) / math.log(1.0 - args.read_per_bp_genome)
+        args.gap_distance_cutoff = max(10000, math.log(1.0 - cut_quantile) / math.log(1.0 - args.read_per_bp_genome))
     else:
         args.gap_distance_cutoff = 30 * 1000.0
 
-    if args.user_defined_gap_distance_cut_off > 500: 
+    if args.user_defined_gap_distance_cut_off > 10000: 
         args.gap_distance_cutoff = args.user_defined_gap_distance_cut_off
+
     global_dist_fp.write('gap_distance_cutoff\t%.10f\n' % args.gap_distance_cutoff)
     args.global_distribution_calculated = True
     global_dist_fp.close()
