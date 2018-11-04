@@ -234,8 +234,8 @@ def extract_weird_reads(args, dbo_args, endpoint_args):
 
     ## sorting bam by read name ##
     task = 'sorting bam by read name'
-    cmd = '%s %s | %s sort -m 2G -@ %d -n -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortn_bam)
-    if args.run_from_begining == False and check_file_exists(args.sortn_bam):
+    cmd = '%s %s | %s sort -m 3G -@ %d -n -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortn_bam)
+    if check_file_exists(args.sortn_bam):
         myprint('File: %s existed, skipped %s' % (args.sortn_bam, task))
     else:
         myprint(task)

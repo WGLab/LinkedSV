@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 import os
 import sys
 from bed import *
@@ -7,6 +7,7 @@ import numpy as np
 from fragment import *
 import math
 import subprocess
+
 
 tab  = '\t'
 endl = '\n'

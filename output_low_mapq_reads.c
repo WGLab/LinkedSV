@@ -12,7 +12,7 @@
 #define N_SPLIT_FILE 1
 
 
-int output_low_mapq_reads(const char * in_bam, const char * out_bam, int map_qual_cutoff)
+int output_low_mapq_reads(const char * in_bam, const char * out_sam, int map_qual_cutoff)
 {
 
     samFile * in, *out;
@@ -29,9 +29,9 @@ int output_low_mapq_reads(const char * in_bam, const char * out_bam, int map_qua
         fprintf (stderr, "ERROR: failed to open file: %s\n", in_bam);
         abort();
     }
-    out = sam_open(out_bam, "w");
+    out = sam_open(out_sam, "w");
     if (NULL == out) {
-        fprintf (stderr, "ERROR: failed to open file: %s\n", out_bam);
+        fprintf (stderr, "ERROR: failed to open file: %s\n", out_sam);
         abort();
     }
 
@@ -74,13 +74,13 @@ int usage(FILE * fp)
 int main (int argc, char * argv[])
 {
     char * in_bam;
-    char * out_bam;
+    char * out_sam;
     int map_qual_cutoff;
 
     int c;
 
     in_bam        = NULL;
-    out_bam     = NULL;
+    out_sam     = NULL;
 
     if (argc < 4){
         usage(stderr);
@@ -88,7 +88,7 @@ int main (int argc, char * argv[])
     }
 
     in_bam        = argv[1];
-    out_bam     = argv[2];
+    out_sam     = argv[2];
     map_qual_cutoff = atoi(argv[3]);
 
     if (NULL == in_bam){
@@ -96,7 +96,7 @@ int main (int argc, char * argv[])
         usage(stderr);
         return 1;
     }
-    if (NULL == out_bam){
+    if (NULL == out_sam){
         fprintf (stderr, "ERROR! output_file is required!\n");
         usage(stderr);
         return 1;
@@ -105,7 +105,7 @@ int main (int argc, char * argv[])
         fprintf (stderr, "ERROR! map_qual_cutoff should be in the range of [0, 30].\n");
         usage(stderr);
     }
-    output_low_mapq_reads(in_bam, out_bam, map_qual_cutoff);
+    output_low_mapq_reads(in_bam, out_sam, map_qual_cutoff);
 
     return 0;    
 }

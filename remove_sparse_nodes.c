@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include "tk.h"
 
-#define LINE_MAX 4096
 #define FIX_LENGTH (int64_t)1e10
 
 
@@ -15,31 +14,6 @@ int usage(FILE * fp)
 }
 
 
-INT_LIST * get_chr_length_from_faidx_file(const char * faidx_file)
-{
-    INT_LIST *chr_length_list;
-    char * line = NULL;
-    int chr_length = 0;
-    FILE * faidx_fp;
-    // char * token;
-    faidx_fp = fopen(faidx_file, "r");
-    if (NULL == faidx_fp){
-        fprintf(stderr, "ERROR! Failed to open file: %s\n", faidx_file);
-        exit(1);
-    }
-
-    chr_length_list = init_int_list(100);
-    line = (char *) calloc (LINE_MAX, sizeof(char)); 
-
-    while (fgets(line, LINE_MAX, faidx_fp)) {
-        sscanf(line, "%*s\t%d\t%*s\n", &chr_length);    
-        append_int_list(chr_length_list, chr_length);
-    }
-
-    fclose(faidx_fp);
-    free(line);
-    return chr_length_list;
-}
 
 NODE_LIST *** read_node_file(const char *in_node_file, int n_chr)
 {

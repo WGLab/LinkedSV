@@ -160,9 +160,9 @@ def extract_barcode_from_bam (args, endpoint_args):
     
     ## sort bam by barcode ##
 
-    cmd = '%s %s | %s sort -m 2G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
+    cmd = '%s %s | %s sort -m 3G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
 
-    if args.run_from_begining == False and check_file_exists(args.sortbx_bam):
+    if check_file_exists(args.sortbx_bam):
         myprint('File: %s existed, skipped sorting bam by barcode' % args.sortbx_bam)
     else:
         myprint('sorting bam file by barcode')
