@@ -3,6 +3,7 @@
 
 #define MAX_READ_LENGTH 1048576
 #define MAX_PATH_LENGTH 10240
+#define LINE_MAX 4096
 
 typedef struct {
 	char ** data_list;
@@ -45,4 +46,6 @@ typedef struct {
 NODE_LIST * init_node_list (int capacity);
 
 int append_node_list (NODE_LIST * node_list, NODE new_node);
+
+INT_LIST * get_chr_length_from_faidx_file(const char * faidx_file);
 #endif 
