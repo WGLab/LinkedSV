@@ -49,7 +49,7 @@ static int two_chr_grid_overlap(int tid1, int tid2, INT_LIST * chr_length_list, 
         exit(1);
     }
 
-    out_fp = fopen(output_file, "w");
+    out_fp = fopen(output_file, "a");
     if (NULL == out_fp){
         fprintf(stderr, "ERROR! Failed to open file for writing: %s\n", output_file);
         exit(1);
@@ -242,6 +242,7 @@ int main(int argc, char * argv[])
     char * input_bcd22_file;
     char * output_file;
     char * faidx_file;
+    FILE * out_fp;
     int min_num_shared_barcodes;
 
     if (argc < 5){
@@ -253,6 +254,9 @@ int main(int argc, char * argv[])
     output_file = argv[2];
     min_num_shared_barcodes = atoi(argv[3]);
     faidx_file = argv[4];
+
+    out_fp = fopen(output_file, "w");
+    fclose(out_fp);
 
     whole_genome_grid_overlap(input_bcd22_file, output_file, min_num_shared_barcodes, faidx_file);
 
