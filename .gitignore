@@ -4,6 +4,9 @@
 *.so
 *.so.1
 *.pico
+*.bam
+*.cram
+*.sam_
 tabix
 htsfile
 bgzip

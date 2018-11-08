@@ -17,7 +17,6 @@ ChrList = ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9
 ChrSet = set(ChrList)
 FIX_LENGTH = int(1e10)
 
-debug = 1
 ##### system tools #####
 
 TimeFormat = '%m/%d/%Y %H:%M:%S'
@@ -26,9 +25,6 @@ def curr_time():
 
     return  '[' + datetime.now().strftime(TimeFormat) + '] '
 
-def deprint(string):
-    if debug: print (string)
-    return
 def myprint(string):
 
     process = psutil.Process(os.getpid())

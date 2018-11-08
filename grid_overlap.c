@@ -4,21 +4,33 @@
 #include <string.h>
 #include "tk.h"
 
+typedef struct {
+    int16_t tid;
+    int32_t start;
+    int32_t end;
+    char bcd[20];
+} FRM_CORE;
+
+typedef struct {
+    FRM_CORE * data_list;
+    size_t size;
+    size_t capacity;
+} FRM_CORE_LIST;
+
 static int usage(FILE * fp) 
 {
     fprintf (fp, "Usage: grid_overlap <input.bcd22> <output_file> <min_num_shared_barcodes> <faidx_file>\n");
     return 0;
 }
 
-static int two_chr_grid_overlap(int tid1, int tid2, INT_LIST * chr_length_list, const char * input_bcd22_file, int bin_size, int min_num_shared_barcodes, const char * output_file, int16_t ** n_overlap_bcd)
+static int two_chr_grid_overlap(int tid1, int tid2, INT_LIST * chr_length_list, FRM_CORE_LIST * all_frm_list, int bin_size, int min_num_shared_barcodes, const char * output_file, int16_t ** n_overlap_bcd)
 {
     int tid;
     int start;
     int end;
     int frm_length;
-    char bcd[20] = {0};
+    char * bcd;
     char exist_bcd[20] = {0};
-    FILE * input_bcd22_fp;
     FILE * out_fp;
     char * line;
     char * temp;
@@ -43,11 +55,6 @@ static int two_chr_grid_overlap(int tid1, int tid2, INT_LIST * chr_length_list, 
     n_bin2 = chr_length_list->data_list[tid2] / bin_size + 1;
     fprintf(stderr, "n_bin1=%d, n_bin2=%d\n", n_bin1, n_bin2);
 
-    input_bcd22_fp = fopen (input_bcd22_file, "r");
-    if (NULL == input_bcd22_fp){
-        fprintf(stderr, "ERROR! Failed to open file for reading: %s\n", input_bcd22_file);
-        exit(1);
-    }
 
     out_fp = fopen(output_file, "a");
     if (NULL == out_fp){
@@ -55,26 +62,13 @@ static int two_chr_grid_overlap(int tid1, int tid2, INT_LIST * chr_length_list, 
         exit(1);
     }
 
-    while (fgets(line, 524288, input_bcd22_fp)) {
-        if (line[0] == '#'){ continue; }
-        tab_cnt = 0;
-        k = 0;
-        while (line[k] != 0 && line[k] != '\n')
-        {
-            if (line[k] == '\t'){
-                tab_cnt += 1;
-            }
-            if (tab_cnt > 5){
-                line[k] = 0;
-            }
-            k += 1;
-        }
-        tid = -1;
-        start = -1;
-        end = -1;
-        frm_length = 0;
-        bcd[0] = 0;
-        sscanf(line, "%d\t%d\t%d\t%d\t%s\t%*s\n", &tid, &start, &end, &frm_length, bcd, temp);    
+    for (int frm_id = 0; frm_id < all_frm_list->size; frm_id ++)
+    {
+        tid = all_frm_list->data_list[frm_id].tid;
+        start = all_frm_list->data_list[frm_id].start;
+        end = all_frm_list->data_list[frm_id].end;
+        bcd = all_frm_list->data_list[frm_id].bcd;
+
         if (tid != tid1 && tid != tid2){ continue; }
 
         if (exist_bcd[0] == 0 ) { strcpy(exist_bcd, bcd); }
@@ -164,11 +158,82 @@ static int two_chr_grid_overlap(int tid1, int tid2, INT_LIST * chr_length_list, 
 
     // close files
     fclose(out_fp);
-    fclose(input_bcd22_fp);
 
     return 0;
 }
 
+FRM_CORE_LIST * read_frm_list_from_bcd22_file(const char * input_bcd22_file)
+{
+    FRM_CORE_LIST * all_frm_list;
+    char * line, *temp;
+    int tab_cnt;
+    int k;
+    char bcd[20] = {0};
+    int tid, start, end, frm_length;
+    FILE * input_bcd22_fp;
+
+    fprintf(stderr, "debug: size of FRM_CORE is: %d\n", sizeof(FRM_CORE));
+
+    fprintf(stderr, "start reading input bcd22 file: %s\n", input_bcd22_file);
+    line = (char *) calloc (524288, sizeof(char));
+    temp = (char *) calloc (524288, sizeof(char));
+
+
+    input_bcd22_fp = fopen (input_bcd22_file, "r");
+    if (NULL == input_bcd22_fp){
+        fprintf(stderr, "ERROR! Failed to open file for reading: %s\n", input_bcd22_file);
+        exit(1);
+    }
+
+    int line_cnt = 0;
+    while (fgets(line, 524288, input_bcd22_fp)) {
+        if (line[0] == '#'){ continue; }
+        line_cnt += 1;
+    }
+
+    fprintf(stderr, "total number of fragments in the input bcd22 file is: %d\n", line_cnt);
+
+    all_frm_list = (FRM_CORE_LIST * ) calloc(1, sizeof(FRM_CORE_LIST));
+    all_frm_list->capacity = line_cnt + 10;
+    all_frm_list->data_list = (FRM_CORE *) calloc (all_frm_list->capacity, sizeof(FRM_CORE));
+    all_frm_list->size = 0;
+
+    fseek (input_bcd22_fp, 0, SEEK_SET);  
+    while (fgets(line, 524288, input_bcd22_fp)) {
+        if (line[0] == '#'){ continue; }
+        tab_cnt = 0;
+        k = 0;
+        while (line[k] != 0 && line[k] != '\n')
+        {
+            if (line[k] == '\t'){
+                tab_cnt += 1;
+            }
+            if (tab_cnt > 5){
+                line[k] = 0;
+            }
+            k += 1;
+        }
+        tid = -1;
+        start = -1;
+        end = -1;
+        frm_length = 0;
+        bcd[0] = 0;
+        sscanf(line, "%d\t%d\t%d\t%d\t%s\t%*s\n", &tid, &start, &end, &frm_length, bcd, temp);    
+
+        if (tid >= 0 && start >= 0 && end >= 0){
+            all_frm_list->data_list[all_frm_list->size].tid = tid;
+            all_frm_list->data_list[all_frm_list->size].start = start;
+            all_frm_list->data_list[all_frm_list->size].end = end;
+            strcpy(all_frm_list->data_list[all_frm_list->size].bcd, bcd);
+            all_frm_list->size += 1;
+        }
+    }
+
+    free(line);
+    free(temp);
+    fprintf(stderr, "finished reading input bcd22 file\n");
+    return all_frm_list;
+}
 
 int whole_genome_grid_overlap(const char * input_bcd22_file, const char * output_file, int min_num_shared_barcodes, const char * faidx_file)
 {
@@ -180,6 +245,8 @@ int whole_genome_grid_overlap(const char * input_bcd22_file, const char * output
     int max_chr_length;
     int16_t ** n_overlap_bcd = NULL;
     int max_n_bin;
+
+    FRM_CORE_LIST * all_frm_list;
     
     bin_size = 2000;
 
@@ -196,6 +263,8 @@ int whole_genome_grid_overlap(const char * input_bcd22_file, const char * output
     fprintf(stderr, "max chr length: %d\n", max_chr_length);
     max_n_bin = (int) (max_chr_length / bin_size) + 10;
     fprintf(stderr, "max number of bin: %d\n", max_n_bin);
+
+    // alloc memory for n_overlap_bcd
     n_overlap_bcd = (int16_t **) calloc(max_n_bin, sizeof(int16_t*));
     if (NULL == n_overlap_bcd){
         fprintf(stderr, "ERROR! Failed to alloc memory for n_overlap_bcd!\n");
@@ -209,11 +278,13 @@ int whole_genome_grid_overlap(const char * input_bcd22_file, const char * output
         }
     }
     
+    all_frm_list = read_frm_list_from_bcd22_file(input_bcd22_file);
+
     for (tid1 = 0; tid1 < n_chr; tid1++){
         for (tid2 = 0; tid2 < n_chr; tid2++)
         {
             fprintf(stderr, "tid1 = %d, tid2 = %d\n", tid1, tid2);
-            fprintf(stderr, "Initializing memory\n", tid1, tid2);
+            fprintf(stderr, "clean-up memory\n", tid1, tid2);
             // if (tid1 != 0 || tid2 != 0) { continue; }
             for (int i = 0; i < max_n_bin; i++)
             {
@@ -223,7 +294,7 @@ int whole_genome_grid_overlap(const char * input_bcd22_file, const char * output
                 }
             }
             fprintf(stderr, "grid overlap search started\n", tid1, tid2);
-            two_chr_grid_overlap(tid1, tid2, chr_length_list, input_bcd22_file, bin_size, min_num_shared_barcodes, output_file, n_overlap_bcd);
+            two_chr_grid_overlap(tid1, tid2, chr_length_list, all_frm_list, bin_size, min_num_shared_barcodes, output_file, n_overlap_bcd);
             fprintf(stderr, "grid overlap search finished\n", tid1, tid2);
         }
     }

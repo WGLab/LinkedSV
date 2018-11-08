@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import os
 import sys
 from bed import *
@@ -7,6 +8,7 @@ import numpy as np
 from fragment import *
 import math
 import subprocess
+from sys import getrefcount
 
 
 tab  = '\t'
@@ -16,7 +18,8 @@ arg = sys.argv[1:]
 def main():
 
     args, dbo_args, endpoint_args = parse_user_arguments()
-    estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_file)
+    target_bcd22_file = endpoint_args.tmpbcd22_file
+    estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_file, is_fast_mode = False)
     return
 
 def read_global_distribution_file(args, endpoint_args):
@@ -57,42 +60,62 @@ def read_global_distribution_file(args, endpoint_args):
 
     return
 
-def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_file):
+def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_file, is_fast_mode = False):
 
+    '''
     if args.run_from_begining == False and check_file_exists(args.global_distribution_file) == True:
         myprint ('global distribution file existed, skipped calculating distribution parameters')
         read_global_distribution_file(args, endpoint_args)
         args.global_distribution_calculated = True
         return
+    '''
 
-    myprint('calculating distribution parameters')
     global_dist_fp = open(args.global_distribution_file, 'w')
-    ret = subprocess.check_output(['wc', '-l', endpoint_args.bcd21_file])
-    args.num_reads_genome = int(ret.split(' ')[0])
-    myprint('total number of reads in the genome is: %d' % args.num_reads_genome)
-    #args.num_reads_genome = line_count(endpoint_args.bcd21_file)
-    global_dist_fp.write('num_reads_genome\t%d\n' % args.num_reads_genome)
+    if is_fast_mode == False:
+        myprint('calculating distribution parameters')
+        ret = subprocess.check_output(['wc', '-l', endpoint_args.bcd21_file])
+        args.num_reads_genome = int(ret.split(' ')[0])
+        myprint('total number of reads in the genome is: %d' % args.num_reads_genome)
+        #args.num_reads_genome = line_count(endpoint_args.bcd21_file)
+        global_dist_fp.write('num_reads_genome\t%d\n' % args.num_reads_genome)
 
-    if args.is_wgs == False:
-        ### get reads in target region ###
-        target_region_bed_file = args.target_region_bed
-        target_region_tidbed_file = target_region_bed_file + '.tidbed'
+        if args.is_wgs == False:
+            ### get reads in target region ###
+            target_region_bed_file = args.target_region_bed
+            target_region_tidbed_file = target_region_bed_file + '.tidbed'
 
-        bed2tidbed_file(target_region_bed_file, args.chrname2tid, target_region_tidbed_file)
+            bed2tidbed_file(target_region_bed_file, args.chrname2tid, target_region_tidbed_file)
 
-        cmd = args.bedtools + ' intersect -wa -u -a ' + endpoint_args.bcd21_file + ' -b ' + target_region_tidbed_file +  ' > ' + endpoint_args.bcd_file_of_target_region
-        os.system(cmd)
-        if os.path.getsize(endpoint_args.bcd_file_of_target_region) <= 0:
-            myprint('failed to get reads in target region')
-            sys.exit()
+            cmd = args.bedtools + ' intersect -wa -u -a ' + endpoint_args.bcd21_file + ' -b ' + target_region_tidbed_file +  ' > ' + endpoint_args.bcd_file_of_target_region
+            os.system(cmd)
+            if os.path.getsize(endpoint_args.bcd_file_of_target_region) <= 0:
+                myprint('failed to get reads in target region')
+                sys.exit()
 
-        args.num_reads_ontarget  = line_count(endpoint_args.bcd_file_of_target_region)
-        args.num_reads_offtarget = args.num_reads_genome - args.num_reads_ontarget
-        global_dist_fp.write('num_reads_ontarget\t%d\n' % args.num_reads_ontarget)
-        global_dist_fp.write('num_reads_offtarget\t%d\n' % args.num_reads_offtarget)
+            args.num_reads_ontarget  = line_count(endpoint_args.bcd_file_of_target_region)
+            args.num_reads_offtarget = args.num_reads_genome - args.num_reads_ontarget
+            global_dist_fp.write('num_reads_ontarget\t%d\n' % args.num_reads_ontarget)
+            global_dist_fp.write('num_reads_offtarget\t%d\n' % args.num_reads_offtarget)
 
     get_fragment_parameter(args, dbo_args, endpoint_args, global_dist_fp, target_bcd22_file)
 
+    cal_gap_distance_cutoff(args, dbo_args, endpoint_args)
+
+    global_dist_fp.write('gap_distance_cutoff\t%.10f\n' % args.gap_distance_cutoff)
+
+    global_dist_fp.close()
+
+    if is_fast_mode == False:
+        args.global_distribution_calculated = True
+    
+    if is_fast_mode == True:
+        os.remove(args.global_distribution_file)
+
+    gc.collect()
+
+    return
+
+def cal_gap_distance_cutoff(args, dbo_args, endpoint_args):
     cut_quantile = 0.99
 
     if args.is_wgs:
@@ -103,11 +126,8 @@ def estimate_global_distribution(args, dbo_args, endpoint_args, target_bcd22_fil
     if args.user_defined_gap_distance_cut_off > 10000: 
         args.gap_distance_cutoff = args.user_defined_gap_distance_cut_off
 
-    global_dist_fp.write('gap_distance_cutoff\t%.10f\n' % args.gap_distance_cutoff)
-    args.global_distribution_calculated = True
-    global_dist_fp.close()
+    return 
 
-    return
 
 def fit_geometric_distribution(length_list, readpair=True):
 
@@ -165,6 +185,7 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
     total_num_reads_in_fragment = 0
     total_num_fragment = 0
     total_gap_distance_list = list()
+
     frm_length_list = list()
     while 1:
         line = bcd22_fp.readline()
@@ -213,7 +234,7 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
 
     num_barcode = len(bcd_count_dict) 
     if num_barcode < 1:
-        myprint ('ERROR! no effective barcode is found')
+        myprint ('ERROR! no valid barcode is found')
         sys.exit()
 
     num_fragment_per_bcd_list = list() 
@@ -247,6 +268,11 @@ def get_fragment_parameter (args, dbo_args, endpoint_args, global_dist_fp, targe
         global_dist_fp.write('read_per_bp_ontarget\t%.20f\n' % args.read_per_bp_ontarget)
         global_dist_fp.write('read_per_bp_offtarget\t%.20f\n' % args.read_per_bp_offtarget)
 
+    
+    del total_gap_distance_list
+    del bcd_count_dict
+    del frm_length_list
+    myprint('finished getting fragment parameters')
     return
 
 def calculate_length_statistics(length_list):

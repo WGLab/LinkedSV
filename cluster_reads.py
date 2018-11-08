@@ -49,34 +49,42 @@ def main():
 
 def cluster_reads(args, dbo_args, endpoint_args):
 
-    ## first round ##
-
-    length_cut = 200 * 1000 # first round length cut is 200k
-
     weired_readname_dict = dict() 
 
+    ## first round ##
+    length_cut = 200 * 1000 # first round length cut is 200k
     if args.run_from_begining == False and check_file_exists(endpoint_args.tmpbcd22_file):
         myprint('tmpbcd22_file existed, skipped first round clustering')
     else:
         myprint('first round clustering reads, length cut is %d, output file is: %s' % (length_cut, endpoint_args.tmpbcd22_file))
-        bcd21_to_bcd22_file(endpoint_args.bcd21_file, endpoint_args.tmpbcd22_file, length_cut, weired_readname_dict, is_fast_mode = True)
+        bcd21_to_bcd22_file (endpoint_args.bcd21_file, endpoint_args.tmpbcd22_file, length_cut, weired_readname_dict)
 
-    global_distribution.estimate_global_distribution (args, dbo_args, endpoint_args, endpoint_args.tmpbcd22_file)
+    global_distribution.estimate_global_distribution (args, dbo_args, endpoint_args, endpoint_args.tmpbcd22_file, is_fast_mode = True)
 
-    ## second round ## 
     # get weird reads #
 
+    myprint('getting weird read names')
+
     tid2chrname_list, chrname2tid_dict = get_chrnames(args.faidx_file)
-    weired_readname_dict = get_weired_readname_dict(chrname2tid_dict, args.weired_reads_file) 
+
+    weired_readname_dict = get_weired_readname_dict(chrname2tid_dict, args.weired_reads_file)
+
+    myprint('finished getting weired read names')
+
+    ## second round ## 
 
     if args.run_from_begining == False and check_file_exists(endpoint_args.bcd22_file):
         myprint('bcd22_file existed, skipped second round clustering')
     else:
         myprint('second round clustering reads, length cut is %d, output file is: %s' % (args.gap_distance_cutoff, endpoint_args.bcd22_file))
-        bcd21_to_bcd22_file (endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.gap_distance_cutoff, weired_readname_dict, is_fast_mode = False)
+        bcd21_to_bcd22_file (endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.gap_distance_cutoff, weired_readname_dict)
 
-    global_distribution.estimate_global_distribution (args, dbo_args, endpoint_args, endpoint_args.bcd22_file)
-    
+    del weired_readname_dict
+
+    gc.collect()
+
+    global_distribution.estimate_global_distribution (args, dbo_args, endpoint_args, endpoint_args.bcd22_file, is_fast_mode = False)
+
     return
 
 
