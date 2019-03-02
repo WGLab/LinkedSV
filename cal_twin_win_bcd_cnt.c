@@ -182,6 +182,7 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 	wg_win2_cnt_list = (INT_LIST **) calloc(n_chr, sizeof(INT_LIST *));
 	wg_ovl_cnt_list = (INT_LIST **) calloc(n_chr, sizeof(INT_LIST *));
 
+	int total_int_list_capacity = 0;
 	for (int tid = 0; tid < n_chr; tid++)
 	{
 		chr_len = chr_length_list->data_list[tid]; 
@@ -192,13 +193,19 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 		wg_win1_cnt_list[tid]->size = n_bin;
 		wg_win2_cnt_list[tid]->size = n_bin;
 		wg_ovl_cnt_list[tid]->size = n_bin;
+		total_int_list_capacity += 3 * n_bin;
 	}
+	//printf("line:%d total_int_list_capacity=%d\n", __LINE__, total_int_list_capacity);
 
+	read_pos_list = init_int_list( (int) 3e5 );
 	seg_start_list = init_int_list(read_pos_list->capacity);
 	seg_end_list = init_int_list(read_pos_list->capacity);
 	idx_list_win1 = init_int_list(read_pos_list->capacity);
 	idx_list_win2 = init_int_list(read_pos_list->capacity);
 	idx_list_ovl = init_int_list(read_pos_list->capacity);
+	total_int_list_capacity += read_pos_list->capacity * 6;
+	//printf("line:%d total_int_list_capacity=%d\n", __LINE__, total_int_list_capacity);
+
 
 	bcd21_fp = gzopen(bcd21_file, "r");
 	if (Z_NULL == bcd21_fp) {
@@ -207,7 +214,7 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 	}
 
 
-	read_pos_list = init_int_list( (int) 3e5 );
+	//printf("line:%d total_int_list_capacity=%d\n", __LINE__, total_int_list_capacity);
 	curr_tid = -1;
 	while (gzgets(bcd21_fp, line, LINE_MAX))
 	{
@@ -286,7 +293,7 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 
 int main(int argc, char * argv[])
 {
-	if (argc < 5){ 
+	if (argc < 4){ 
 		fprintf (stderr, "Usage: cal_twin_win_bcd_cnt <input.bcd21.gz> <output_file> <faidx_file>\n");
 		return 1;
 	}
