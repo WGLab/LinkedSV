@@ -1,4 +1,5 @@
 #!/bin/bash
+mkdir -p bin/
 cd src
 
 mkdir -p lib/
