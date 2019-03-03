@@ -17,4 +17,4 @@ gcc -g -O0 -std=c99                        -o cal_read_depth_from_bcd21 cal_read
 gcc -g -O0 -std=c99                        -o cal_barcode_depth_from_bcd21 cal_barcode_depth_from_bcd21.c tk.c -l z
 gcc -g -O0 -std=c99                        -o cal_twin_win_bcd_cnt cal_twin_win_bcd_cnt.c         tk.c -l z
 
-cp extract_barcode_info output_bam_coreinfo remove_sparse_nodes grid_overlap cal_read_depth_from_bcd21 cal_barcode_depth_from_bcd21 cal_twin_win_bcd_cnt ../bin/
+mv extract_barcode_info output_bam_coreinfo remove_sparse_nodes grid_overlap cal_read_depth_from_bcd21 cal_barcode_depth_from_bcd21 cal_twin_win_bcd_cnt ../bin/

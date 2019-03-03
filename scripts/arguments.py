@@ -306,7 +306,7 @@ def parse_user_arguments():
     parser.set_defaults(is_wgs = True)
     parser.add_argument('--target_region', required = False, metavar = 'BED', type = str, default = '', help ='bed file of target regions (required if --targeted is specified)')
     parser.add_argument('--gap_distance_cut_off', required = False, metavar = 'INT', type = int, default = -1, help ='max distance between two reads in a HMW DNA molecule (default: automatically determined)')
-    parser.add_argument('--rm_temp_files', required = False, metavar = 'INT', type = int, default = 0, help ='remove intermediate files after the run. The value should be 1 (True) or 0 (False). (default: 0)')
+    parser.add_argument('--rm_temp_files', required = False, metavar = 'INT', type = int, default = 1, help ='remove intermediate files after the run. The value should be 1 (True) or 0 (False). (default: 1)')
 
     input_args = parser.parse_args()
 
