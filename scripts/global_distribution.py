@@ -190,7 +190,7 @@ def get_fragment_parameters (args, dbo_args, endpoint_args, global_dist_fp, targ
         endpoint_args.min_frag_length = max(N95_length, 2000)  # at least 2000 for WES data
 
     if args.user_defined_min_frag_length > 0:
-        endpoint_args.min_frag_length = max(args.user_defined_min_frag_length, 500) # min fragment length should be more than 500 even user defined a smaller value
+        endpoint_args.min_frag_length = args.user_defined_min_frag_length
 
     global_dist_fp.write('min_frag_length\t%d\n' % endpoint_args.min_frag_length)
 
