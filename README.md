@@ -37,7 +37,7 @@ The `phased_possorted_bam.bam` is the full path to the phased_possorted_bam.bam 
 
 The `ref.fasta` file is the FASTA file of the reference genome. It should be the same fasta file that was used for alignment.
 
-`ref_version` is used to tell LinkedSV which black_list file and gap_region file should be used. Currently we have generated blacklists for hg19 (stype: "chr1"), b37 (stype: "1") and hg38 (stype: "chr1"). If `ref_version` is not specifed or you are using a different reference file, please generate these files by yourself and specify the `--gap_region_bed` and `--black_region_bed` parameters. 
+`ref_version` is used to tell LinkedSV which black_list file and gap_region file should be used. Currently we have generated blacklists for hg19 (style: "chr1"), b37 (style: "1") and hg38 (style: "chr1"). If `ref_version` is not specifed or you are using a different reference file, please generate these files by yourself and specify the `--gap_region_bed` and `--black_region_bed` parameters. 
 
 `-t 4` tells LinkedSV to use 4 threads. We recommend using at least 4 threads to speed up the run. Each thread need 4GB memory.
 
