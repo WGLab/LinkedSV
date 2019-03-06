@@ -17,10 +17,10 @@ class AlignedRead:
         self.cigar_operation_list = None
         self.cigar_operation_length_list = None
         self.n_cigar = None
-        self.end3p_pos = None
+        self.endR_pos = None
         self.cigar_analysis()
         self.get_right_ref_pos() 
-        self.get_end3p_pos()
+        self.get_endR_pos()
 
     def output_core(self):
         outstring = '%s\t%d\t%s\t%d\t%s\t%d' % (self.read_id, self.flag, self.chrm, self.left_pos, self.cigar_string, self.n_cigar)
@@ -89,11 +89,11 @@ class AlignedRead:
     def has_clip(self):
         return (self.has_left_clip() or self.has_right_clip())
 
-    def get_end3p_pos(self):
+    def get_endR_pos(self):
         if self.flag & 0x10:
-            self.end3p_pos = self.left_pos 
+            self.endR_pos = self.left_pos 
         else:
-            self.end3p_pos = self.right_pos
+            self.endR_pos = self.right_pos
 
     def major_clip_side(self):
 
@@ -129,27 +129,27 @@ class PairedEndSupport:
             self.aligned_read2 = aligned_read2
 
             if self.aligned_read1.map_orientation() == 1:
-                self.endtype1 = '3p_end'
+                self.endtype1 = 'R_end'
             else: 
-                self.endtype1 = '5p_end'
+                self.endtype1 = 'L_end'
 
             if self.aligned_read2.map_orientation() == 1:
-                self.endtype2 = '3p_end'
+                self.endtype2 = 'R_end'
             else: 
-                self.endtype2 = '5p_end'
+                self.endtype2 = 'L_end'
 
     def output(self):
 
         chr1 = self.aligned_read1.chrm
         chr2 = self.aligned_read2.chrm
 
-        if self.endtype1 == '3p_end':
-            pos1 = self.aligned_read1.end3p_pos
+        if self.endtype1 == 'R_end':
+            pos1 = self.aligned_read1.endR_pos
         else:
             pos1 = self.aligned_read1.left_pos
 
-        if self.endtype2 == '3p_end':
-            pos2 = self.aligned_read2.end3p_pos
+        if self.endtype2 == 'R_end':
+            pos2 = self.aligned_read2.endR_pos
         else:
             pos2 = self.aligned_read2.left_pos
 
@@ -174,14 +174,14 @@ class SplitReadSupport:
             self.aligned_read2 = aligned_read2
 
             if self.aligned_read1.major_clip_side() == 'left': 
-                self.endtype1 = '5p_end'
+                self.endtype1 = 'L_end'
             else:
-                self.endtype1 = '3p_end'
+                self.endtype1 = 'R_end'
 
             if self.aligned_read2.major_clip_side() == 'left': 
-                self.endtype2 = '5p_end'
+                self.endtype2 = 'L_end'
             else:
-                self.endtype2 = '3p_end'
+                self.endtype2 = 'R_end'
 
             if self.aligned_read1.major_clip_side() == 'left':
                 self.major_clip_pos1 = self.aligned_read1.left_pos

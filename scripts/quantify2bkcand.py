@@ -42,8 +42,8 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
 
     paired_bk_cand_list = list()
 
-    candidate_region_3p_list = list() # candidate region is a tuple  (key_start, key_end)
-    candidate_region_5p_list = list() # candidate region is a tuple  (key_start, key_end)
+    candidate_region_R_list = list() # candidate region is a tuple  (key_start, key_end)
+    candidate_region_L_list = list() # candidate region is a tuple  (key_start, key_end)
 
     search_range = max(args.gap_distance990, 10000)
 
@@ -60,36 +60,36 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
 
         paired_bk_cand_list.append(paired_bk_cand)
 
-        if paired_bk_cand.endtype1 == '3p_end':
+        if paired_bk_cand.endtype1 == 'R_end':
             start1     = pos1 - 2 * search_range
             key_start1 = tid1 * FIX_LENGTH + start1
             key_end1   = key_start1 + 3 * search_range
-            candidate_region_3p_list.append( (key_start1, key_end1) )
-        elif paired_bk_cand.endtype1 == '5p_end':
+            candidate_region_R_list.append( (key_start1, key_end1) )
+        elif paired_bk_cand.endtype1 == 'L_end':
             start1     = pos1 - search_range 
             key_start1 = tid1 * FIX_LENGTH + start1
             key_end1   = key_start1 + 3 * search_range
-            candidate_region_5p_list.append( (key_start1, key_end1) )
+            candidate_region_L_list.append( (key_start1, key_end1) )
         else:
             myprint('ERROR! unknown endpoint type:%s' % paired_bk_cand.endtype1)
 
-        if paired_bk_cand.endtype2 == '3p_end':
+        if paired_bk_cand.endtype2 == 'R_end':
             start2     = pos2 - 2 * search_range
             key_start2 = tid2 * FIX_LENGTH + start2
             key_end2   = key_start2 + 3 * search_range
-            candidate_region_3p_list.append( (key_start2, key_end2) )
+            candidate_region_R_list.append( (key_start2, key_end2) )
 
-        elif paired_bk_cand.endtype2 == '5p_end':
+        elif paired_bk_cand.endtype2 == 'L_end':
             start2     = pos2 - search_range
             key_start2 = tid2 * FIX_LENGTH + start2
             key_end2   = key_start2 + 3 * search_range
-            candidate_region_5p_list.append( (key_start2, key_end2) )
+            candidate_region_L_list.append( (key_start2, key_end2) )
         else:
             myprint('ERROR! unknown endpoint type:%s' % paired_bk_cand.endtype1)
 
 
-    merge_candidate_region_3p_list = merge_region_list(candidate_region_3p_list)
-    merge_candidate_region_5p_list = merge_region_list(candidate_region_5p_list)
+    merge_candidate_region_R_list = merge_region_list(candidate_region_R_list)
+    merge_candidate_region_L_list = merge_region_list(candidate_region_L_list)
 
     if args.is_wgs:
         min_frm_length = 2000
@@ -97,7 +97,7 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
         min_frm_length = 200 
 
     myprint ('reading bcd22 file: %s' % endpoint_args.bcd22_file)
-    bcd22_frm_list = get_target_region_frm_from_bcd22_file(endpoint_args.bcd22_file, merge_candidate_region_3p_list, merge_candidate_region_5p_list, min_frm_length)
+    bcd22_frm_list = get_target_region_frm_from_bcd22_file(endpoint_args.bcd22_file, merge_candidate_region_R_list, merge_candidate_region_L_list, min_frm_length)
     myprint ('finished reading bcd22 file: %s' % endpoint_args.bcd22_file)
 
     myprint ('number of fragments in candidate region: %d' % len(bcd22_frm_list))
@@ -163,18 +163,18 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
     return 
 
 
-def get_target_region_frm_from_bcd22_file(bcd22_file, merge_candidate_region_3p_list, merge_candidate_region_5p_list, min_frm_length):
+def get_target_region_frm_from_bcd22_file(bcd22_file, merge_candidate_region_R_list, merge_candidate_region_L_list, min_frm_length):
 
     frm_list = list()
 
-    start_pos_3p_list = list()
-    start_pos_5p_list = list()
+    start_pos_R_list = list()
+    start_pos_L_list = list()
 
-    for i in range(0, len(merge_candidate_region_3p_list)):
-        start_pos_3p_list.append(merge_candidate_region_3p_list[i][0])
+    for i in range(0, len(merge_candidate_region_R_list)):
+        start_pos_R_list.append(merge_candidate_region_R_list[i][0])
 
-    for i in range(0, len(merge_candidate_region_5p_list)):
-        start_pos_5p_list.append(merge_candidate_region_5p_list[i][0])
+    for i in range(0, len(merge_candidate_region_L_list)):
+        start_pos_L_list.append(merge_candidate_region_L_list[i][0])
     
     bcd22_fp = open(bcd22_file, 'r')
     while 1:
@@ -185,7 +185,7 @@ def get_target_region_frm_from_bcd22_file(bcd22_file, merge_candidate_region_3p_
         frm = Fragment(line)
         if frm.length < min_frm_length: continue
         
-        if in_region_list(frm.tid, frm.start, merge_candidate_region_5p_list, start_pos_5p_list) or in_region_list(frm.tid, frm.end, merge_candidate_region_3p_list, start_pos_3p_list): frm_list.append(frm)
+        if in_region_list(frm.tid, frm.start, merge_candidate_region_L_list, start_pos_L_list) or in_region_list(frm.tid, frm.end, merge_candidate_region_R_list, start_pos_R_list): frm_list.append(frm)
 
     bcd22_fp.close()
 
@@ -335,12 +335,12 @@ def get_region_frm_list (tid, start, end, endtype, start_sorted_frm_list, end_so
 
     frm_list = list ()
     ## get all fragments of which the endpoints in the region
-    if endtype == '5p_end':
+    if endtype == 'L_end':
         searchstart_index = bisect.bisect_left(start_key_list, tid * FIX_LENGTH + start) 
         searchend_index   = bisect.bisect_right(start_key_list, tid * FIX_LENGTH + end)
         for i in range(searchstart_index, searchend_index):
             frm_list.append(start_sorted_frm_list[i])
-    elif endtype == '3p_end': 
+    elif endtype == 'R_end': 
         searchstart_index = bisect.bisect_left(end_key_list, tid * FIX_LENGTH + start)
         searchend_index   = bisect.bisect_right(end_key_list,  tid * FIX_LENGTH + end)
         for i in range(searchstart_index, searchend_index):
@@ -361,14 +361,14 @@ def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22
     bk2_pos = paired_bk_cand.start2
 
     search_range = args.gap_distance990
-    if paired_bk_cand.endtype1 == '5p_end':
+    if paired_bk_cand.endtype1 == 'L_end':
         start1 = paired_bk_cand.start1 - 100 
         end1 = start1 + search_range + 100 
     else:
         end1 = paired_bk_cand.end1 + 100
         start1 = end1 - search_range - 100
 
-    if paired_bk_cand.endtype2 == '5p_end':
+    if paired_bk_cand.endtype2 == 'L_end':
         start2 = paired_bk_cand.start2 - 100
         end2 = start2 + search_range  + 100
     else:
@@ -472,12 +472,12 @@ def quantification_svtype(args, dbo_args, endpoint_args, shared_fragment_list1, 
     start2_logp = estimate_breakpoint_logp(args, start_pos_list2)
     end2_logp   = estimate_breakpoint_logp(args, end_pos_list2)
 
-    if endtype1 == '5p_end': 
+    if endtype1 == 'L_end': 
         endtype1_logp = start1_logp - end1_logp   
     else:
         endtype1_logp = end1_logp - start1_logp  
 
-    if endtype2 == '5p_end': 
+    if endtype2 == 'L_end': 
         endtype2_logp = start2_logp - end2_logp   
     else:
         endtype2_logp = end2_logp - start2_logp  
@@ -485,16 +485,16 @@ def quantification_svtype(args, dbo_args, endpoint_args, shared_fragment_list1, 
     predicted_endtype1 = endtype1
     predicted_endtype2 = endtype2
 
-    if predicted_endtype1 == '5p_end' and predicted_endtype2 == '5p_end':
+    if predicted_endtype1 == 'L_end' and predicted_endtype2 == 'L_end':
         predicted_svtype = 'INV' 
-    elif predicted_endtype1 == '3p_end' and predicted_endtype2 == '3p_end':
+    elif predicted_endtype1 == 'R_end' and predicted_endtype2 == 'R_end':
         predicted_svtype = 'INV' 
-    elif predicted_endtype1 == '5p_end' and predicted_endtype2 == '3p_end':
+    elif predicted_endtype1 == 'L_end' and predicted_endtype2 == 'R_end':
         if np.median(start_pos_list1) > np.median(end_pos_list2):
             predicted_svtype = 'DEL'
         else: 
             predicted_svtype = 'DUP'
-    elif predicted_endtype1 == '3p_end' and predicted_endtype2 == '5p_end':
+    elif predicted_endtype1 == 'R_end' and predicted_endtype2 == 'L_end':
         if np.median(end_pos_list1) > np.median(start_pos_list2):
             predicted_svtype = 'DUP'
         else: 
@@ -515,24 +515,24 @@ def predict_bk_pos(start_pos_list1, start_pos_list2, end_pos_list1, end_pos_list
     '''
     n_supp = len(start_pos_list1)
     bk_shift = int(median_gap_distance)
-    if predicted_endtype1 == '5p_end':
+    if predicted_endtype1 == 'L_end':
         bk1_pos = int(np.median(start_pos_list1)) - bk_shift
     else:
         bk1_pos = int(np.median(end_pos_list1)) + bk_shift
 
-    if predicted_endtype2 == '5p_end': 
+    if predicted_endtype2 == 'L_end': 
         bk2_pos = int(np.median(start_pos_list2)) - bk_shift
     else:
         bk2_pos = int(np.median(end_pos_list2)) + bk_shift
     '''
 
 
-    if predicted_endtype1 == '5p_end':
+    if predicted_endtype1 == 'L_end':
         bk1_pos = int(np.quantile(start_pos_list1, 0.1))
     else:
         bk1_pos = int(np.quantile(end_pos_list1), 0.9)
 
-    if predicted_endtype2 == '5p_end': 
+    if predicted_endtype2 == 'L_end': 
         bk2_pos = int(np.quantile(start_pos_list2, 0.1))
     else:
         bk2_pos = int(np.quantile(end_pos_list2, 0.9))

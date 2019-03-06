@@ -134,31 +134,31 @@ def convert_reads_info_list_to_string(reads_info_list):
 
 def exist_read_pair_support(frm1, frm2, endtype1, endtype2): 
 
-    if endtype1 == '3p_end' and frm1.n_right_weird_reads == 0: return False
-    if endtype1 == '5p_end' and frm1.n_left_weird_reads == 0: return False
-    if endtype2 == '3p_end' and frm2.n_right_weird_reads == 0: return False
-    if endtype2 == '5p_end' and frm2.n_left_weird_reads == 0: return False 
+    if endtype1 == 'R_end' and frm1.n_right_weird_reads == 0: return False
+    if endtype1 == 'L_end' and frm1.n_left_weird_reads == 0: return False
+    if endtype2 == 'R_end' and frm2.n_right_weird_reads == 0: return False
+    if endtype2 == 'L_end' and frm2.n_left_weird_reads == 0: return False 
 
     frm1_left_weird_reads_info_list, frm1_right_weird_reads_info_list, frm1_other_weird_reads_info_list = get_weird_reads_info_from_fragments(frm1)
     frm2_left_weird_reads_info_list, frm2_right_weird_reads_info_list, frm2_other_weird_reads_info_list = get_weird_reads_info_from_fragments(frm2)
 
-    if endtype1 == '3p_end' and endtype2 == '3p_end':
+    if endtype1 == 'R_end' and endtype2 == 'R_end':
         for read_info1 in frm1_right_weird_reads_info_list:
             for read_info2 in frm2_right_weird_reads_info_list:
                 if read_info1.read_id == read_info2.read_id and read_info1.flag & 0x10 == 0 and read_info2.flag & 0x10 == 0:  return True
 
 
-    if endtype1 == '5p_end' and endtype2 == '5p_end':
+    if endtype1 == 'L_end' and endtype2 == 'L_end':
         for read_info1 in frm1_left_weird_reads_info_list:
             for read_info2 in frm2_left_weird_reads_info_list:
                 if read_info1.read_id == read_info2.read_id and read_info1.flag & 0x10 and read_info2.flag & 0x10:  return True
 
-    if endtype1 == '5p_end' and endtype2 == '3p_end':
+    if endtype1 == 'L_end' and endtype2 == 'R_end':
         for read_info1 in frm1_left_weird_reads_info_list:
             for read_info2 in frm2_right_weird_reads_info_list:
                 if read_info1.read_id == read_info2.read_id and read_info1.flag & 0x10 and read_info2.flag & 0x10 == 0: return True
 
-    if endtype1 == '3p_end' and endtype2 == '5p_end':
+    if endtype1 == 'R_end' and endtype2 == 'L_end':
         for read_info1 in frm1_right_weird_reads_info_list:
             for read_info2 in frm2_left_weird_reads_info_list:
                 if read_info1.read_id == read_info2.read_id and read_info1.flag & 0x10 == 0 and read_info2.flag & 0x10: return True

@@ -216,16 +216,16 @@ def read_weird_reads_file(in_weird_reads_file, chrname2tid_dict):
         short_read_support = ShortReadSupport(line + [tid1, tid2])
         if abs(short_read_support.key1 - short_read_support.key2) > 50000: continue 
 
-        if short_read_support.endtype1 == '3p_end' and short_read_support.endtype2 == '3p_end': 
+        if short_read_support.endtype1 == 'R_end' and short_read_support.endtype2 == 'R_end': 
             short_read_support_list33.append(short_read_support)
 
-        elif short_read_support.endtype1 == '5p_end' and short_read_support.endtype2 == '5p_end': 
+        elif short_read_support.endtype1 == 'L_end' and short_read_support.endtype2 == 'L_end': 
             short_read_support_list55.append(short_read_support)
 
-        elif short_read_support.endtype1 == '5p_end' and short_read_support.endtype2 == '3p_end': 
+        elif short_read_support.endtype1 == 'L_end' and short_read_support.endtype2 == 'R_end': 
             short_read_support_list53.append(short_read_support)
 
-        elif short_read_support.endtype1 == '3p_end' and short_read_support.endtype2 == '5p_end': 
+        elif short_read_support.endtype1 == 'R_end' and short_read_support.endtype2 == 'L_end': 
             short_read_support_list35.append(short_read_support)
 
     in_weird_reads_fp.close()

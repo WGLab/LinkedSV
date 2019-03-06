@@ -31,10 +31,10 @@ class AlignedRead:
         self.cigar_operation_list = None
         self.cigar_operation_length_list = None
         self.n_cigar = None
-        self.end3p_pos = None
+        self.endR_pos = None
         self.cigar_analysis()
         self.get_right_ref_pos() 
-        self.get_end3p_pos()
+        self.get_endR_pos()
 
         self.bcd = ''    
         self.hp = 0
@@ -108,11 +108,11 @@ class AlignedRead:
     def has_clip(self):
         return (self.has_left_clip() or self.has_right_clip())
 
-    def get_end3p_pos(self):
+    def get_endR_pos(self):
         if self.flag & 0x10:
-            self.end3p_pos = self.left_pos 
+            self.endR_pos = self.left_pos 
         else:
-            self.end3p_pos = self.right_pos
+            self.endR_pos = self.right_pos
 
     def major_clip_side(self):
 
@@ -148,14 +148,14 @@ class PairedEndSupport:
             self.aligned_read2 = aligned_read2
 
             if self.aligned_read1.map_orientation() == 1:
-                self.endtype1 = '3p_end'
+                self.endtype1 = 'R_end'
             else: 
-                self.endtype1 = '5p_end'
+                self.endtype1 = 'L_end'
 
             if self.aligned_read2.map_orientation() == 1:
-                self.endtype2 = '3p_end'
+                self.endtype2 = 'R_end'
             else: 
-                self.endtype2 = '5p_end'
+                self.endtype2 = 'L_end'
 
 class SplitReadSupport:
 
@@ -173,14 +173,14 @@ class SplitReadSupport:
             self.aligned_read2 = aligned_read2
 
             if self.aligned_read1.major_clip_side() == 'left': 
-                self.endtype1 = '5p_end'
+                self.endtype1 = 'L_end'
             else:
-                self.endtype1 = '3p_end'
+                self.endtype1 = 'R_end'
 
             if self.aligned_read2.major_clip_side() == 'left': 
-                self.endtype2 = '5p_end'
+                self.endtype2 = 'L_end'
             else:
-                self.endtype2 = '3p_end'
+                self.endtype2 = 'R_end'
 
             if self.aligned_read1.major_clip_side() == 'left':
                 self.major_clip_pos1 = self.aligned_read1.left_pos
@@ -202,8 +202,8 @@ class PESupportGroup:
         self.endtype2 = None
         self.bk1_pos = -1
         self.bk2_pos = -1
-        self.median_end3p_pos1 = -1
-        self.median_end3p_pos2 = -1
+        self.median_endR_pos1 = -1
+        self.median_endR_pos2 = -1
         self.map_orientation1  = 0
         self.map_orientation2  = 0
 
@@ -218,17 +218,17 @@ class PESupportGroup:
 
     def predict_bk_pos(self, median_readpair_gap_distance):
         if len(self.pe_support_list) < 1: return
-        end3p_pos_list1 = list() 
-        end3p_pos_list2 = list()
+        endR_pos_list1 = list() 
+        endR_pos_list2 = list()
         for pe_support in self.pe_support_list: 
-            end3p_pos_list1.append(pe_support.aligned_read1.end3p_pos)
-            end3p_pos_list2.append(pe_support.aligned_read2.end3p_pos)
+            endR_pos_list1.append(pe_support.aligned_read1.endR_pos)
+            endR_pos_list2.append(pe_support.aligned_read2.endR_pos)
 
-        self.median_end3p_pos1 = np.median(end3p_pos_list1)
-        self.median_end3p_pos2 = np.median(end3p_pos_list2)
+        self.median_endR_pos1 = np.median(endR_pos_list1)
+        self.median_endR_pos2 = np.median(endR_pos_list2)
 
-        self.bk1_pos = self.median_end3p_pos1 + self.map_orientation1 * median_readpair_gap_distance / 2
-        self.bk2_pos = self.median_end3p_pos2 + self.map_orientation2 * median_readpair_gap_distance / 2 
+        self.bk1_pos = self.median_endR_pos1 + self.map_orientation1 * median_readpair_gap_distance / 2
+        self.bk2_pos = self.median_endR_pos2 + self.map_orientation2 * median_readpair_gap_distance / 2 
         return
 
 class SRSupportGroup:
@@ -566,8 +566,8 @@ def analyze_pe_support_list (args, pe_support_list, svcall_bedpe):
         for j in range(i+1, len(pe_support_list)):
             pe_support1 = pe_support_list[i]
             pe_support2 = pe_support_list[j]
-            dist1 = abs(pe_support1.aligned_read1.end3p_pos - pe_support2.aligned_read1.end3p_pos)
-            dist2 = abs(pe_support1.aligned_read2.end3p_pos - pe_support2.aligned_read2.end3p_pos)
+            dist1 = abs(pe_support1.aligned_read1.endR_pos - pe_support2.aligned_read1.endR_pos)
+            dist2 = abs(pe_support1.aligned_read2.endR_pos - pe_support2.aligned_read2.endR_pos)
             map_ori_match = False
             if pe_support1.aligned_read1.map_orientation() == pe_support2.aligned_read1.map_orientation() and pe_support1.aligned_read2.map_orientation() == pe_support2.aligned_read2.map_orientation(): map_ori_match = True
             if dist1 < max_isize_cutoff and dist2 < max_isize_cutoff and map_ori_match == True:

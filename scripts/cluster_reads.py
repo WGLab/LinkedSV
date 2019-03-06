@@ -52,7 +52,7 @@ def cluster_reads(args, dbo_args, endpoint_args):
 
 
     ## first round ##
-    length_cut = 200 * 1000 # first round length cut is 200k
+    length_cut = 50 * 1000 # first round length cut is 50k
     if args.run_from_begining == False and check_file_exists(endpoint_args.tmpbcd22_file):
         myprint('tmpbcd22_file existed, skipped first round clustering')
     else:

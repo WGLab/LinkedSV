@@ -104,18 +104,18 @@ def filter_calls(args, dbo_args, endpoint_args):
             n_black_reg += 1
             continue
 
-        if sv_length < 200000 and svcall.endtype1 == '3p_end' and svcall.chrm1 in gap_left_region_dict and index1 in gap_left_region_dict[svcall.chrm1]: 
+        if sv_length < 200000 and svcall.endtype1 == 'R_end' and svcall.chrm1 in gap_left_region_dict and index1 in gap_left_region_dict[svcall.chrm1]: 
             n_gap += 1
             continue
-        if sv_length < 200000 and svcall.endtype1 == '5p_end' and svcall.chrm1 in gap_right_region_dict and index1 in gap_right_region_dict[svcall.chrm1]: 
-            n_gap += 1
-            continue
-
-        if sv_length < 200000 and svcall.endtype2 == '3p_end' and svcall.chrm2 in gap_left_region_dict and index2 in gap_left_region_dict[svcall.chrm2]: 
+        if sv_length < 200000 and svcall.endtype1 == 'L_end' and svcall.chrm1 in gap_right_region_dict and index1 in gap_right_region_dict[svcall.chrm1]: 
             n_gap += 1
             continue
 
-        if sv_length < 200000 and svcall.endtype2 == '5p_end' and svcall.chrm2 in gap_right_region_dict and index2 in gap_right_region_dict[svcall.chrm2]: 
+        if sv_length < 200000 and svcall.endtype2 == 'R_end' and svcall.chrm2 in gap_left_region_dict and index2 in gap_left_region_dict[svcall.chrm2]: 
+            n_gap += 1
+            continue
+
+        if sv_length < 200000 and svcall.endtype2 == 'L_end' and svcall.chrm2 in gap_right_region_dict and index2 in gap_right_region_dict[svcall.chrm2]: 
             n_gap += 1
             continue
 
@@ -176,12 +176,12 @@ def filter_calls(args, dbo_args, endpoint_args):
         tid1 = chrname2tid_dict[svcall.chrm1]
         tid2 = chrname2tid_dict[svcall.chrm2]
 
-        if svcall.endtype1 == '5p_end':
+        if svcall.endtype1 == 'L_end':
             region_key_start1 = tid1 * FIX_LENGTH + svcall.start1 - region_size
         else:
             region_key_start1 = tid1 * FIX_LENGTH + svcall.start1 
 
-        if svcall.endtype2 == '5p_end':
+        if svcall.endtype2 == 'L_end':
             region_key_start2 = tid2 * FIX_LENGTH + svcall.start2 - region_size
         else:
             region_key_start2 = tid2 * FIX_LENGTH + svcall.start2 
@@ -304,14 +304,14 @@ def filter_calls_2d (svcall_list,  black_list_file, out_file, remove_chr_prefix 
         end_type1 = svcall.endtype1
         end_type2 = svcall.endtype2
         
-        if end_type1 == '3p_end':
+        if end_type1 == 'R_end':
             start1 = pos1 - box_length
-        elif end_type1 == '5p_end':
+        elif end_type1 == 'L_end':
             start1 = pos1 
 
-        if end_type2 == '3p_end':
+        if end_type2 == 'R_end':
             start2 = pos2 - box_length
-        elif end_type2 == '5p_end':
+        elif end_type2 == 'L_end':
             start2 = pos2
 
         end1 = start1 + box_length

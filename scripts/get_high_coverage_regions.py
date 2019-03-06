@@ -132,8 +132,8 @@ def in_high_cov_region(tid, pos, high_cov_dict):
 def read_high_cov_region_file(high_cov_file):
 
     high_cov_dict = dict()
-    high_cov_3p_dict = dict()
-    high_cov_5p_dict = dict()
+    high_cov_R_dict = dict()
+    high_cov_L_dict = dict()
 
     high_cov_fp = open(high_cov_file, 'r')
     while 1:
@@ -146,24 +146,24 @@ def read_high_cov_region_file(high_cov_file):
         
         if tid not in high_cov_dict:
             high_cov_dict[tid]    = dict()
-            high_cov_3p_dict[tid] = dict()
-            high_cov_5p_dict[tid] = dict()
+            high_cov_R_dict[tid] = dict()
+            high_cov_L_dict[tid] = dict()
 
         for i in range(start, end, 100):
             index = int(i / 100)
             high_cov_dict[tid][index]    = 1
-            high_cov_3p_dict[tid][index] = 1
-            high_cov_5p_dict[tid][index] = 1
+            high_cov_R_dict[tid][index] = 1
+            high_cov_L_dict[tid][index] = 1
             
         for i in range(end, end + 10000, 100):
             index = int(i / 100)
-            high_cov_3p_dict[tid][index] = 1
+            high_cov_R_dict[tid][index] = 1
 
         for i in range(start-10000, start, 100):
             index = int(i / 100)
-            high_cov_5p_dict[tid][index] = 1
+            high_cov_L_dict[tid][index] = 1
 
-    return high_cov_dict, high_cov_3p_dict, high_cov_5p_dict
+    return high_cov_dict, high_cov_R_dict, high_cov_L_dict
 
 if __name__ == '__main__':
     main()

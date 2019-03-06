@@ -170,16 +170,16 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
 
     myprint ('clustering nodes, max distance for connecting two nodes is: %d' % max_gap_distance) 
 
-    clustering_nodes(args, dbo_args, endpoint_args, args.node33_candidate_file, args.node_cluster33_file, max_gap_distance,  '3p_end', '3p_end')
+    clustering_nodes(args, dbo_args, endpoint_args, args.node33_candidate_file, args.node_cluster33_file, max_gap_distance,  'R_end', 'R_end')
     gc.collect()
 
-    clustering_nodes(args, dbo_args, endpoint_args, args.node55_candidate_file, args.node_cluster55_file, max_gap_distance,  '5p_end', '5p_end')
+    clustering_nodes(args, dbo_args, endpoint_args, args.node55_candidate_file, args.node_cluster55_file, max_gap_distance,  'L_end', 'L_end')
     gc.collect()
 
-    clustering_nodes(args, dbo_args, endpoint_args, args.node53_candidate_file, args.node_cluster53_file, max_gap_distance,  '5p_end', '3p_end')
+    clustering_nodes(args, dbo_args, endpoint_args, args.node53_candidate_file, args.node_cluster53_file, max_gap_distance,  'L_end', 'R_end')
     gc.collect()
 
-    clustering_nodes(args, dbo_args, endpoint_args, args.node35_candidate_file, args.node_cluster35_file, max_gap_distance,  '3p_end', '5p_end')
+    clustering_nodes(args, dbo_args, endpoint_args, args.node35_candidate_file, args.node_cluster35_file, max_gap_distance,  'R_end', 'L_end')
     gc.collect()
 
     if args.rm_temp_files:
@@ -492,7 +492,7 @@ def convert_node_cluster_to_paired_bk_cand(args, dbo_args, endpoint_args, bcd22_
 
     bin_size = 50
 
-    xbk_pos, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_3p_score, x_withoutpe_5p_score, x_withoutpe_n_3p_supp, x_withoutpe_n_5p_supp, ybk_pos, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_3p_score, y_withoutpe_5p_score, y_withoutpe_n_3p_supp, y_withoutpe_n_5p_supp = predict_breakpoint_position (args, dbo_args, endpoint_args, supp_frm_with_pe_list1, supp_frm_with_pe_list2, supp_frm_without_pe_list1, supp_frm_without_pe_list2, endtype1, endtype2, bin_size)
+    xbk_pos, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_R_score, x_withoutpe_L_score, x_withoutpe_n_R_supp, x_withoutpe_n_L_supp, ybk_pos, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_R_score, y_withoutpe_L_score, y_withoutpe_n_R_supp, y_withoutpe_n_L_supp = predict_breakpoint_position (args, dbo_args, endpoint_args, supp_frm_with_pe_list1, supp_frm_with_pe_list2, supp_frm_without_pe_list1, supp_frm_without_pe_list2, endtype1, endtype2, bin_size)
 
     xtid, xstart = get_tid_pos_from_key(xbk_pos)
     ytid, ystart = get_tid_pos_from_key(ybk_pos)
@@ -509,8 +509,8 @@ def convert_node_cluster_to_paired_bk_cand(args, dbo_args, endpoint_args, bcd22_
     else:
         svlength = 'NA' 
 
-    info = 'x_total_score=%.2f;x_total_n_supp=%d;x_withpe_score=%.2f;x_withpe_n_supp=%d;x_withoutpe_3p_score=%.2f;x_withoutpe_5p_score=%.2f;x_withoutpe_n_3p_supp=%d;x_withoutpe_n_5p_supp=%d;' % (x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_3p_score, x_withoutpe_5p_score, x_withoutpe_n_3p_supp, x_withoutpe_n_5p_supp)
-    info += 'y_total_score=%.2f;y_total_n_supp=%d;y_withpe_score=%.2f;y_withpe_n_supp=%d;y_withoutpe_3p_score=%.2f;y_withoutpe_5p_score=%.2f;y_withoutpe_n_3p_supp=%d;y_withoutpe_n_5p_supp=%d;' % (y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_3p_score, y_withoutpe_5p_score, y_withoutpe_n_3p_supp, y_withoutpe_n_5p_supp)
+    info = 'x_total_score=%.2f;x_total_n_supp=%d;x_withpe_score=%.2f;x_withpe_n_supp=%d;x_withoutpe_R_score=%.2f;x_withoutpe_L_score=%.2f;x_withoutpe_n_R_supp=%d;x_withoutpe_n_L_supp=%d;' % (x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_R_score, x_withoutpe_L_score, x_withoutpe_n_R_supp, x_withoutpe_n_L_supp)
+    info += 'y_total_score=%.2f;y_total_n_supp=%d;y_withpe_score=%.2f;y_withpe_n_supp=%d;y_withoutpe_R_score=%.2f;y_withoutpe_L_score=%.2f;y_withoutpe_n_R_supp=%d;y_withoutpe_n_L_supp=%d;' % (y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_R_score, y_withoutpe_L_score, y_withoutpe_n_R_supp, y_withoutpe_n_L_supp)
     info += 'x_num_supp_frm_withpe=%d;x_num_supp_frm_withoutpe=%d;y_num_supp_frm_withpe=%d;y_num_supp_frm_withoutpe=%d;supp_bcd=%s' % (len(supp_frm_with_pe_list1), len(supp_frm_without_pe_list1), len(supp_frm_with_pe_list2), len(supp_frm_without_pe_list2), supp_bcd_string)
 
     attr_list = [xchr, xstart, xstart+1, ychr, ystart, ystart+1, svtype, svlength, endtype1, endtype2, n_supp, score, info] 
@@ -529,37 +529,37 @@ def predict_breakpoint_position (args, dbo_args, endpoint_args, supp_frm_with_pe
         frm1 = supp_frm_with_pe_list1[i]
         frm2 = supp_frm_with_pe_list2[i]
 
-        if endtype1 == '3p_end': 
+        if endtype1 == 'R_end': 
             x_with_pe_list.append(frm1.key_end())
         else: 
             x_with_pe_list.append(frm1.key_start())
 
-        if endtype2 == '3p_end':
+        if endtype2 == 'R_end':
             y_with_pe_list.append(frm2.key_end())
         else:
             y_with_pe_list.append(frm2.key_start())
 
-    x3p_without_pe_list = list()
-    x5p_without_pe_list = list()
-    y3p_without_pe_list = list()
-    y5p_without_pe_list = list()
+    xR_without_pe_list = list()
+    xL_without_pe_list = list()
+    yR_without_pe_list = list()
+    yL_without_pe_list = list()
     for i in range(0, len(supp_frm_without_pe_list1)):
         frm1 = supp_frm_without_pe_list1[i]
         frm2 = supp_frm_without_pe_list2[i]
-        x3p_without_pe_list.append(frm1.key_end())
-        x5p_without_pe_list.append(frm1.key_start())
-        y3p_without_pe_list.append(frm2.key_end())
-        y5p_without_pe_list.append(frm2.key_start())
+        xR_without_pe_list.append(frm1.key_end())
+        xL_without_pe_list.append(frm1.key_start())
+        yR_without_pe_list.append(frm2.key_end())
+        yL_without_pe_list.append(frm2.key_start())
 
-    if endtype1 == '3p_end': 
-        x_total_list = x3p_without_pe_list + x_with_pe_list
+    if endtype1 == 'R_end': 
+        x_total_list = xR_without_pe_list + x_with_pe_list
     else:
-        x_total_list = x5p_without_pe_list + x_with_pe_list
+        x_total_list = xL_without_pe_list + x_with_pe_list
 
-    if endtype2 == '3p_end': 
-        y_total_list = y3p_without_pe_list + y_with_pe_list
+    if endtype2 == 'R_end': 
+        y_total_list = yR_without_pe_list + y_with_pe_list
     else:
-        y_total_list = y5p_without_pe_list + y_with_pe_list
+        y_total_list = yL_without_pe_list + y_with_pe_list
 
 
     xmin = min(x_total_list) - 1000
@@ -573,27 +573,27 @@ def predict_breakpoint_position (args, dbo_args, endpoint_args, supp_frm_with_pe
     xscore_list = list()
     for x_key in range(xmin, xmax, bin_size): 
         x_withpe_score, x_withpe_n_supp = calculate_withpe_score (x_key, x_with_pe_list, mean_gap_withpe, endtype1)
-        x_withoutpe_3p_score, x_withoutpe_5p_score, x_withoutpe_n_3p_supp, x_withoutpe_n_5p_supp = calculate_withoutpe_score(x_key, x3p_without_pe_list, x5p_without_pe_list, mean_gap_withoutpe)  
-        x_total_score = x_withpe_score + x_withoutpe_3p_score + x_withoutpe_5p_score
-        x_total_n_supp = x_withpe_n_supp + x_withoutpe_n_3p_supp + x_withoutpe_n_5p_supp
+        x_withoutpe_R_score, x_withoutpe_L_score, x_withoutpe_n_R_supp, x_withoutpe_n_L_supp = calculate_withoutpe_score(x_key, xR_without_pe_list, xL_without_pe_list, mean_gap_withoutpe)  
+        x_total_score = x_withpe_score + x_withoutpe_R_score + x_withoutpe_L_score
+        x_total_n_supp = x_withpe_n_supp + x_withoutpe_n_R_supp + x_withoutpe_n_L_supp
 
-        xscore_list.append( (x_key, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_3p_score, x_withoutpe_5p_score, x_withoutpe_n_3p_supp, x_withoutpe_n_5p_supp) )
+        xscore_list.append( (x_key, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_R_score, x_withoutpe_L_score, x_withoutpe_n_R_supp, x_withoutpe_n_L_supp) )
 
     yscore_list = list()
     for y_key in range(ymin, ymax, bin_size):
         y_withpe_score, y_withpe_n_supp = calculate_withpe_score (y_key, y_with_pe_list, mean_gap_withpe, endtype2)
-        y_withoutpe_3p_score, y_withoutpe_5p_score, y_withoutpe_n_3p_supp, y_withoutpe_n_5p_supp = calculate_withoutpe_score(y_key, y3p_without_pe_list, y5p_without_pe_list, mean_gap_withoutpe)  
-        y_total_score  = y_withpe_score + y_withoutpe_3p_score + y_withoutpe_5p_score
-        y_total_n_supp = y_withpe_n_supp + y_withoutpe_n_3p_supp + y_withoutpe_n_5p_supp
-        yscore_list.append( (y_key, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_3p_score, y_withoutpe_5p_score, y_withoutpe_n_3p_supp, y_withoutpe_n_5p_supp) )
+        y_withoutpe_R_score, y_withoutpe_L_score, y_withoutpe_n_R_supp, y_withoutpe_n_L_supp = calculate_withoutpe_score(y_key, yR_without_pe_list, yL_without_pe_list, mean_gap_withoutpe)  
+        y_total_score  = y_withpe_score + y_withoutpe_R_score + y_withoutpe_L_score
+        y_total_n_supp = y_withpe_n_supp + y_withoutpe_n_R_supp + y_withoutpe_n_L_supp
+        yscore_list.append( (y_key, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_R_score, y_withoutpe_L_score, y_withoutpe_n_R_supp, y_withoutpe_n_L_supp) )
 
     max_xscore_index = get_max_index_from_score_list(xscore_list)
     max_yscore_index = get_max_index_from_score_list(yscore_list)
 
-    xbk_pos, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_3p_score, x_withoutpe_5p_score, x_withoutpe_n_3p_supp, x_withoutpe_n_5p_supp = xscore_list[max_xscore_index] 
-    ybk_pos, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_3p_score, y_withoutpe_5p_score, y_withoutpe_n_3p_supp, y_withoutpe_n_5p_supp = yscore_list[max_yscore_index]
+    xbk_pos, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_R_score, x_withoutpe_L_score, x_withoutpe_n_R_supp, x_withoutpe_n_L_supp = xscore_list[max_xscore_index] 
+    ybk_pos, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_R_score, y_withoutpe_L_score, y_withoutpe_n_R_supp, y_withoutpe_n_L_supp = yscore_list[max_yscore_index]
 
-    return xbk_pos, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_3p_score, x_withoutpe_5p_score, x_withoutpe_n_3p_supp, x_withoutpe_n_5p_supp, ybk_pos, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_3p_score, y_withoutpe_5p_score, y_withoutpe_n_3p_supp, y_withoutpe_n_5p_supp
+    return xbk_pos, x_total_score, x_total_n_supp, x_withpe_score, x_withpe_n_supp, x_withoutpe_R_score, x_withoutpe_L_score, x_withoutpe_n_R_supp, x_withoutpe_n_L_supp, ybk_pos, y_total_score, y_total_n_supp, y_withpe_score, y_withpe_n_supp, y_withoutpe_R_score, y_withoutpe_L_score, y_withoutpe_n_R_supp, y_withoutpe_n_L_supp
 
 
 def get_max_index_from_score_list(score_list):
@@ -608,43 +608,43 @@ def get_max_index_from_score_list(score_list):
 
     return max_index
 
-def calculate_withoutpe_score(bk_pos, e3p_without_pe_list, e5p_without_pe_list, mean_gap):
+def calculate_withoutpe_score(bk_pos, eR_without_pe_list, eL_without_pe_list, mean_gap):
 
     max_score = 1.0
     p = 1.0 / float(mean_gap)
     max_gap = math.log(0.01) / math.log(1-p)
 
-    gap_3p_list = list()
-    gap_5p_list = list()
+    gap_R_list = list()
+    gap_L_list = list()
 
-    for pos in e3p_without_pe_list:
+    for pos in eR_without_pe_list:
         gap = bk_pos - pos
-        gap_3p_list.append(gap)
+        gap_R_list.append(gap)
 
-    for pos in e5p_without_pe_list:
+    for pos in eL_without_pe_list:
         gap = pos - bk_pos 
-        gap_5p_list.append(gap)
+        gap_L_list.append(gap)
 
-    total_3p_score = 0
-    total_5p_score = 0
+    total_R_score = 0
+    total_L_score = 0
 
-    n_3p_supp = 0
-    n_5p_supp = 0
+    n_R_supp = 0
+    n_L_supp = 0
 
-    for i in range(0, len(gap_3p_list)):
-        gap3p = gap_3p_list[i]
-        gap5p = gap_5p_list[i]
+    for i in range(0, len(gap_R_list)):
+        gapR = gap_R_list[i]
+        gapL = gap_L_list[i]
 
-        score3p = convert_gap_to_score(gap3p, max_gap, max_score)
-        score5p = convert_gap_to_score(gap5p, max_gap, max_score)
+        scoreR = convert_gap_to_score(gapR, max_gap, max_score)
+        scoreL = convert_gap_to_score(gapL, max_gap, max_score)
 
-        total_3p_score += score3p
-        total_5p_score += score5p
+        total_R_score += scoreR
+        total_L_score += scoreL
 
-        if score3p > 0: n_3p_supp += 1
-        if score5p > 0: n_5p_supp += 1
+        if scoreR > 0: n_R_supp += 1
+        if scoreL > 0: n_L_supp += 1
 
-    return total_3p_score, total_5p_score, n_3p_supp, n_5p_supp 
+    return total_R_score, total_L_score, n_R_supp, n_L_supp 
 
 def convert_gap_to_score(gap, max_gap, max_score):
     if gap > max_gap: 
@@ -670,7 +670,7 @@ def calculate_withpe_score(bk_pos, pos_list, mean_gap, endtype):
 
     gap_list = list()
     for pos in pos_list:
-        if endtype == '3p_end':
+        if endtype == 'R_end':
             gap = bk_pos - pos
         else:
             gap = pos - bk_pos 
@@ -711,10 +711,10 @@ def get_paired_bk_from_node_clusters(args, dbo_args, endpoint_args):
 
     out_fp = open(out_file, 'w')
 
-    paired_bk_cand_list33 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, '3p_end', '3p_end', args.node_cluster33_file, max_gap_distance, out_fp)  
-    paired_bk_cand_list55 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, '5p_end', '5p_end', args.node_cluster55_file, max_gap_distance, out_fp)  
-    paired_bk_cand_list53 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, '5p_end', '3p_end', args.node_cluster53_file, max_gap_distance, out_fp)  
-    paired_bk_cand_list35 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, '3p_end', '5p_end', args.node_cluster35_file, max_gap_distance, out_fp)  
+    paired_bk_cand_list33 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, 'R_end', 'R_end', args.node_cluster33_file, max_gap_distance, out_fp)  
+    paired_bk_cand_list55 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, 'L_end', 'L_end', args.node_cluster55_file, max_gap_distance, out_fp)  
+    paired_bk_cand_list53 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, 'L_end', 'R_end', args.node_cluster53_file, max_gap_distance, out_fp)  
+    paired_bk_cand_list35 = get_paired_bk_from1type_node_clusters(args, dbo_args, endpoint_args, 'R_end', 'L_end', args.node_cluster35_file, max_gap_distance, out_fp)  
 
     out_fp.close()
 
