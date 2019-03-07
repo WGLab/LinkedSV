@@ -83,3 +83,7 @@ The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the follo
 ## Citation
 If you use LinkedSV in your work, please cite:
 > Li Fang, Charlly Kao, Michael V Gonzalez, Fernanda A Mafra, Renata Pellegrino da Silva, Mingyao Li, Soren Wenzel, Katharina Wimmer, Hakon Hakonarson, Kai Wang. LinkedSV: Detection of mosaic structural variants from linked-read exome and genome sequencing data. bioRxiv 409789; doi: https://doi.org/10.1101/409789
+
+## Getting Help
+
+Please use the [GitHub's Issues page](https://github.com/WGLab/LinkedSV/issues) if you have questions.
