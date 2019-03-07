@@ -55,7 +55,7 @@ python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fas
 
 LinkedSV will output two files, `prefix.raw_svcalls.bedpe` and `prefix.filtered_svcalls.bedpe`. In most cases, you only need to look at the `prefix.filtered_svcalls.bedpe`. 
 
-The BEDPE format was defined by bedtools (https://bedtools.readthedocs.io/en/latest/content/general-usage.html). I can be used to concisely describe disjoint genome features, such as structural variations or paired-end sequence alignments.
+The BEDPE format was defined by bedtools (https://bedtools.readthedocs.io/en/latest/content/general-usage.html). It can be used to concisely describe disjoint genome features, such as structural variations or paired-end sequence alignments.
 
 The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the following tab-delimited columns:
 
@@ -76,3 +76,8 @@ The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the follo
 |endpoint2_type|type of enriched fragment endpoint near breakpoint 2|
 |qual_score|quality score of the SV|
 |supporting_barcodes|barcode sequences of the fragments that support the SV|
+
+
+## Citation
+If you use LinkedSV in your work, please cite:
+> Li Fang, Charlly Kao, Michael V Gonzalez, Fernanda A Mafra, Renata Pellegrino da Silva, Mingyao Li, Soren Wenzel, Katharina Wimmer, Hakon Hakonarson, Kai Wang. LinkedSV: Detection of mosaic structural variants from linked-read exome and genome sequencing data. bioRxiv 409789; doi: https://doi.org/10.1101/409789
