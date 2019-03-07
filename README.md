@@ -42,13 +42,15 @@ The `ref.fasta` file is the FASTA file of the reference genome. It should be the
 
 `ref_version` is used to tell LinkedSV which black_list file and gap_region file should be used. Currently we have generated blacklists for hg19 (style: "chr1"), b37 (style: "1") and hg38 (style: "chr1"). If `ref_version` is not specifed or you are using a different reference file, please generate these files by yourself and specify the `--gap_region_bed` and `--black_region_bed` parameters. 
 
-`-t 4` tells LinkedSV to use 4 threads. We recommend using at least 4 threads to speed up the run. Each thread need 4GB memory.
+We recommend using at least 4 threads to speed up the run. Each thread need 4GB memory.
 
 2. Detection of SVs from targeted sequencing (e.g. whole-exome sequencing) . 
 
 ```
 python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4 --targeted --target_region path/to/target_region.bed
 ```
+
+`target_region.bed` is a bed file that contains the target regions (capture regions). 
 
 
 ### Output files of LinkedSV
