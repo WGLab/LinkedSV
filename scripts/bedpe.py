@@ -58,7 +58,7 @@ class QuantifiedBKCandCore:
 
     def __init__(self, attr_list):
 
-        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.support_barcodes = attr_list[0:15]
+        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.support_barcodes = attr_list[0:14]
 
         self.start1 = int(self.start1)
         self.end1 = int(self.end1)
@@ -67,15 +67,22 @@ class QuantifiedBKCandCore:
         self.end2 = int(self.end2)
    
         self.score = float(self.score)
-        self.logp_nosv_one_mol = float(self.logp_nosv_one_mol)
 
         self.num_fragment_support = int(self.num_fragment_support)
         self.n_readpair_support = int(self.n_readpair_support)
         self.svlength = str(self.svlength)
+        self.ft = '.' # filter_info
 
     def output_core(self):
 
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\t%f\t%f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.support_barcodes)
+        supp_barcodes = self.support_barcodes.strip(',')
+        outstring  = '%s\t%d\t%d\t' % (self.chrm1, self.start1, self.end1)
+        outstring += '%s\t%d\t%d\t' % (self.chrm2, self.start2, self.end2)
+        outstring += '%s\t%s\t%s\t' % (self.svtype, self.svlength, self.ft)
+        outstring += '%d\t%d\t' % (self.num_fragment_support, self.n_readpair_support)
+        outstring += '%s\t%s\t' % (self.endtype1, self.endtype2)
+        outstring += '%.4f\t%s' % (self.score, supp_barcodes)
+
         return outstring
 
 
@@ -137,7 +144,7 @@ class QuantifiedBKCand:
 
     def output_core(self):
 
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\t%f\t%f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.support_barcodes)
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\t%f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.support_barcodes)
         return outstring
 
     def frm_id_list1(self):

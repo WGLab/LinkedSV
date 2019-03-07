@@ -98,49 +98,46 @@ def filter_calls(args, dbo_args, endpoint_args):
 
         if svcall.chrm1 in black_reg_dict and index1 in black_reg_dict[svcall.chrm1]: 
             n_black_reg += 1
-            continue
+            svcall.fl = 'LOW_QUAL'
 
         if svcall.chrm2 in black_reg_dict and index2 in black_reg_dict[svcall.chrm2]: 
             n_black_reg += 1
-            continue
+            svcall.fl = 'LOW_QUAL'
 
         if sv_length < 200000 and svcall.endtype1 == 'R_end' and svcall.chrm1 in gap_left_region_dict and index1 in gap_left_region_dict[svcall.chrm1]: 
             n_gap += 1
-            continue
-        if sv_length < 200000 and svcall.endtype1 == 'L_end' and svcall.chrm1 in gap_right_region_dict and index1 in gap_right_region_dict[svcall.chrm1]: 
+            svcall.fl = 'LOW_QUAL'
+
+        if sv_length < 200000 and svcall.endtype1 == 'L_end' and svcall.chrm1 in gap_right_region_dict and index1 in gap_right_region_dict[svcall.chrm1]:
+            svcall.fl = 'LOW_QUAL'
             n_gap += 1
-            continue
 
         if sv_length < 200000 and svcall.endtype2 == 'R_end' and svcall.chrm2 in gap_left_region_dict and index2 in gap_left_region_dict[svcall.chrm2]: 
             n_gap += 1
-            continue
+            svcall.fl = 'LOW_QUAL'
 
-        if sv_length < 200000 and svcall.endtype2 == 'L_end' and svcall.chrm2 in gap_right_region_dict and index2 in gap_right_region_dict[svcall.chrm2]: 
+        if sv_length < 200000 and svcall.endtype2 == 'L_end' and svcall.chrm2 in gap_right_region_dict and index2 in gap_right_region_dict[svcall.chrm2]:
             n_gap += 1
-            continue
-
+            svcall.fl = 'LOW_QUAL'
 
         round1_retained_sv_list.append(svcall)
 
-    myprint('1st round filtering finished, number of retained SVs: %d'  %  len(round1_retained_sv_list))
-    myprint('2nd round filtering started')
+    myprint ('1st round filtering finished')
+    myprint ('2nd round filtering started')
 
     all_supp_barcode_dict = dict()
 
     round2_retained_sv_list = list() 
 
     for svcall in round1_retained_sv_list:
+        if svcall.ft == 'LOW_QUAL': continue
         support_barcode_list = svcall.support_barcodes.rstrip(',').split(',')
         for bcd in support_barcode_list:
             all_supp_barcode_dict[bcd] = list()
 
 
     myprint('reading low mapq bcd21 file: %s'  % endpoint_args.low_mapq_bcd21_file)
-    if endpoint_args.low_mapq_bcd21_file[-2:] == 'gz':
-        low_mapq_bcd21_fp = gzip.open(endpoint_args.low_mapq_bcd21_file, 'r')
-    else:
-        low_mapq_bcd21_fp = open(endpoint_args.low_mapq_bcd21_file, 'r')
-
+    low_mapq_bcd21_fp = gzopen(endpoint_args.low_mapq_bcd21_file, 'r')
     i = 0 
     while 1:
         line = low_mapq_bcd21_fp.readline()
@@ -165,6 +162,9 @@ def filter_calls(args, dbo_args, endpoint_args):
     region_size = 10 * 1000
     # for deletion, the region is the deletion region, for other type of svs, the region is 10 kb of either breakpoint
     for svcall in round1_retained_sv_list:
+        if svcall.ft == 'LOW_QUAL': 
+            round2_retained_sv_list.append(svcall) 
+            continue
 
         support_barcode_list = svcall.support_barcodes.rstrip(',').split(',')
         n_low_mapq_bcd = 0
@@ -206,11 +206,11 @@ def filter_calls(args, dbo_args, endpoint_args):
 
         n_supp_bcd = svcall.num_fragment_support 
         ratio_low_mapq_bcd = float(n_low_mapq_bcd) / float(n_supp_bcd)
-        if ratio_low_mapq_bcd < 0.2 and svcall.score * (1-ratio_low_mapq_bcd) > 20:
-            round2_retained_sv_list.append(svcall) 
+        if (not (ratio_low_mapq_bcd < 0.2 and svcall.score * (1-ratio_low_mapq_bcd) > 20)):
+            svcall.fl = 'LOW_QUAL'
+        round2_retained_sv_list.append(svcall)
 
-    myprint('2nd round of filtering finished, number of retained SVs: %d' % len(round2_retained_sv_list))
-
+    myprint('2nd round of filtering finished')
     myprint('3rd round of filtering started')
 
     if args.ref_version == 'b37':
@@ -219,12 +219,18 @@ def filter_calls(args, dbo_args, endpoint_args):
         remove_chr_prefix = False
 
     final_retained_sv_list = filter_calls_2d (round2_retained_sv_list, args.black_region_2d_file, args.filter_bedpe_file,  remove_chr_prefix)
-    myprint ('3rd round of filtering finished, number of retained SVs: %d' % len(final_retained_sv_list))
+    myprint ('3rd round of filtering finished') 
+
+    header  = '#chrom1\tstart1\tstop1\tchrom2\tstart2\tstop2\t'
+    header += 'sv_type\tsv_length\tfilter\t'
+    header += 'num_supporting_fragments\tnum_supporting_read_pairs\t'
+    header += 'endpoint1_type\tendpoint2_type\tqual_score\tsupporting_barcodes\n'
 
     out_file  = args.filter_bedpe_file
     out_fp    = open(out_file, 'w')
+    out_fp.write(header)
     for svcall in final_retained_sv_list:
-        out_fp.write(svcall.output_core() + endl)
+        if svcall.ft == 'PASS': out_fp.write(svcall.output_core() + endl)
     out_fp.close()
 
     return
@@ -297,6 +303,10 @@ def filter_calls_2d (svcall_list,  black_list_file, out_file, remove_chr_prefix 
     box_length = mean_fragment_length
 
     for svcall in svcall_list:
+        if svcall.ft == 'LOW_QUAL': 
+            retained_svcall_list.append(svcall.ft)
+            continue
+
         chr1 = svcall.chrm1
         pos1 = svcall.start1
         chr2 = svcall.chrm2 
@@ -330,8 +340,11 @@ def filter_calls_2d (svcall_list,  black_list_file, out_file, remove_chr_prefix 
         else:
             number_of_points = 0
       
-        if number_of_points < 20:
-            retained_svcall_list.append(svcall) 
+        if number_of_points < 20 and svcall.ft == '.':
+            svcall.ft = 'PASS'
+        else:
+            svcall.ft = 'LOW_QUAL'
+        retained_svcall_list.append(svcall) 
         
     return retained_svcall_list
 
@@ -352,7 +365,6 @@ def get_number_of_points_from_black_list_file(start1, end1, start2, end2, pos1_l
         if pos1_list[idx1] >= start1_bin:
             pos2_list = pos2_list_list[idx1]
             idx2 = max(0, bisect.bisect_left(pos2_list, start2_bin) - 1)
-            myprint('idx2=%d, pos2_list[idx2]=%d' % (idx2, pos2_list[idx2]) )
 
             while idx2 < len(pos2_list) and pos2_list[idx2] <= end2_bin: 
                 if pos2_list[idx2] >= start2_bin:
@@ -361,7 +373,6 @@ def get_number_of_points_from_black_list_file(start1, end1, start2, end2, pos1_l
 
         idx1 += 1
 
-    myprint('number_of_points=%d' % number_of_points)
     return number_of_points
 
 def read_2d_blacklist_file(black_list_file, remove_chr_prefix):

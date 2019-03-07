@@ -422,7 +422,7 @@ def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22
     total_logp_gap_ontarget, total_logp_gap_offtarget, total_logp_frm_length = logp_nosv_one_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
     logp_barcode = logp_nosv_two_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
 
-    llr_barcode_overlapping = min(max(total_logp_gap_ontarget, total_logp_frm_length), logp_barcode) + 3 * n_readpair_support 
+    llr_barcode_overlapping = min(max(total_logp_gap_ontarget, total_logp_frm_length)/1.5, logp_barcode) + 3 * n_readpair_support 
     llg1 = total_logp_gap_ontarget 
     llg2 = total_logp_gap_offtarget
     llg3 = total_logp_frm_length 
