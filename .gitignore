@@ -7,6 +7,8 @@
 *.bam
 *.cram
 *.sam_
+*.sam
+*.tmp
 tabix
 htsfile
 bgzip
