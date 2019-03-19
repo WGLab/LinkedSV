@@ -4,7 +4,7 @@ LinkedSV is a structural variant caller for 10X Genomics (linked-read) sequencin
 ## Installation
 
 ### Prerequisites
-GCC (version >= 4.8).
+GCC (version >= 4.4).
 
 Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse.
 
