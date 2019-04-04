@@ -2,9 +2,17 @@
 
 LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) sequencing data. It detects deletions, duplications, inversions and translocations using evidence from the barcoded reads. 
 
-## Installation
+## Table of Contents
+- [Installation](#Installation)
+  - [Prerequisites](#Prerequisites)
+- [Usage](#Usage)
+  - [Examples](#Examples)
+- [Output Files](#Output)
 
-### Prerequisites
+
+## <a name="Installation"></a>Installation
+
+### <a name="Prerequisites"></a> Prerequisites
 
 Most of the source code was written in Python, but the time-consuming steps were written in C. It uses htslib to process bam files.
 
@@ -39,7 +47,7 @@ sh build.sh
 ```
 
 
-## Usage
+## <a name="Usage"></a>Usage
 
 ```
 usage: linkedsv.py [-h] -i input.phased_possorted_bam.bam -d output_directory
@@ -76,7 +84,7 @@ If you are using a different reference file, please generate the `black_region_b
 If you don't have samtools and bedtools in your path, please specify the path using `--samtools` and `--bedtools`. 
 
 
-### Examples: 
+### <a name="Examples"></a> Examples: 
 
 **1. Detection of germline SVs from whole-genome sequencing**
 
@@ -102,7 +110,7 @@ python linkedsv.py -i input.phased_possorted_bam.bam -d path/to/output_dir/ -r r
 
 
 
-### Output files of LinkedSV
+## <a name="Output"></a> Output Files
 
 LinkedSV will output two files, `prefix.raw_svcalls.bedpe` and `prefix.filtered_svcalls.bedpe`. In most cases, you only need to look at the `prefix.filtered_svcalls.bedpe`. 
 
@@ -129,10 +137,10 @@ The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the follo
 |supporting_barcodes|barcode sequences of the fragments that support the SV|
 
 
-## Citation
+## <a name="Citation"></a> Citation
 If you use LinkedSV in your work, please cite:
 > Li Fang, Charlly Kao, Michael V Gonzalez, Fernanda A Mafra, Renata Pellegrino da Silva, Mingyao Li, Soren Wenzel, Katharina Wimmer, Hakon Hakonarson, Kai Wang. LinkedSV: Detection of mosaic structural variants from linked-read exome and genome sequencing data. bioRxiv 409789; doi: https://doi.org/10.1101/409789
 
-## Getting Help
+## <a name="Getting Help"></a> Getting Help
 
 Please use the [GitHub's Issues page](https://github.com/WGLab/LinkedSV/issues) if you have questions.
