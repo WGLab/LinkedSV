@@ -1,22 +1,43 @@
 # Users' Guide
-LinkedSV is a structural variant caller for 10X Genomics (linked-read) sequencing data. It detects deletions, duplications, inversions and translocations using evidence from the barcoded reads. 
+
+LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) sequencing data. It detects deletions, duplications, inversions and translocations using evidence from the barcoded reads. 
 
 ## Installation
 
 ### Prerequisites
-GCC (version >= 4.4).
 
-Python (version: 2.7)
+Most of the source code was written in Python, but the time-consuming steps were written in C. It uses htslib to process bam files.
 
-Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime
+The following software tools and packages are required for the installation of LinkedSV. 
 
-SAMtools (version >= 1.3, https://github.com/samtools/samtools ) and BEDTools (https://bedtools.readthedocs.io/en/latest/). 
+1. GCC (version >= 4.4)
+
+2. Python (version: 2.7)
+
+3. Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime
+
+You can use `pip` to install a python package. For example, if you want to install sklearn, you can use the following command: 
+
+```
+pip install --user sklearn
+```
+
+The `--user` tells pip to install the seaborn in your own directory, so that you don't need root access. 
+
+If you don't have `pip` in your system, you can install pip according to the instructions here: https://pip.pypa.io/en/stable/installing/
+
+4. SAMtools (version >= 1.3, https://github.com/samtools/samtools)
+
+5. BEDTools (https://bedtools.readthedocs.io/en/latest/). 
+
+If the above tools and packages are avaiable, you can use the following command to download and compile LinkedSV: 
 
 ```
 git clone https://github.com/WGLab/LinkedSV.git 
 cd LinkedSV/
 sh build.sh 
 ```
+
 
 ## Usage
 
