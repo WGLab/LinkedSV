@@ -22,16 +22,20 @@ class global_parameter:
         self.black_region_2d_file  = ''
         self.low_mapq_region_bed_file = ''
 
-        self.min_mapq = parser_args.min_mapq
+        self.min_mapq = 20
         self.n_thread = parser_args.n_thread
 
         self.samtools = parser_args.samtools
         self.bedtools = parser_args.bedtools
-        self.split_weird_reads_program = os.path.join(self.root_dir, 'scripts/split_weird_reads_file.py')
 
         self.is_wgs             = parser_args.is_wgs
         self.target_region_bed  = parser_args.target_region
-        self.rm_temp_files      = parser_args.rm_temp_files
+        if parser_args.save_temp_files == True:
+            self.rm_temp_files      = False
+        else:
+            self.rm_temp_files      = True
+
+        self.germline_mode      = parser_args.germline_mode
 
         self.temp_file_list = list()
 
@@ -57,11 +61,20 @@ class global_parameter:
         self.extract_barcode = os.path.join(self.root_dir, 'bin/extract_barcode_info')
         self.remove_sparse_nodes = os.path.join(self.root_dir, 'bin/remove_sparse_nodes');
         self.output_bam_coreinfo = os.path.join(self.root_dir, 'bin/output_bam_coreinfo');
+        self.cal_read_depth_from_bcd21 = os.path.join(self.root_dir, 'bin/cal_read_depth_from_bcd21');
+        self.cal_barcode_depth_from_bcd21 = os.path.join(self.root_dir, 'bin/cal_barcode_depth_from_bcd21');
+        self.cal_centroid_from_read_depth = os.path.join(self.root_dir, 'bin/cal_centroid_from_read_depth');
+        self.cal_twin_win_bcd_cnt = os.path.join(self.root_dir, 'bin/cal_twin_win_bcd_cnt');
+        self.grid_overlap = os.path.join(self.root_dir, 'bin/grid_overlap');
+        self.split_weird_reads_program = os.path.join(self.root_dir, 'scripts/split_weird_reads_file.py')
+        self.cal_expected_overlap_value = os.path.join(self.root_dir, 'scripts/cal_expected_overlap_value.py')
+        self.cal_2d_overlapping_barcodes = os.path.join(self.root_dir, 'bin/cal_2d_overlapping_barcodes')
 
         self.alt_ctg_file  = os.path.join(self.root_dir, 'black_lists/alternative_contigs.txt')
 
         self.user_defined_min_frag_length = parser_args.min_fragment_length
         self.user_defined_gap_distance_cut_off = parser_args.gap_distance_cut_off
+        self.user_defined_min_reads_in_fragment = parser_args.min_reads_in_fragment
 
         self.bcd_file  = self.out_prefix + '.bcd' 
         self.args_file = self.out_prefix + '.arguments' 
@@ -95,6 +108,7 @@ class global_parameter:
         self.merged_bedpe_file = self.out_prefix + '.raw_svcalls.bedpe'
         self.filter_bedpe_file = self.out_prefix + '.filtered_svcalls.bedpe'
 
+        self.read_depth_file = self.out_prefix + '.read_depth.txt'
         self.chrname2tid = None
         self.tid2chrname = None
         self.global_distribution_calculated = False
@@ -149,45 +163,17 @@ class dbo_parameter:
     def __init__(self, global_args):
 
         ### output files ###
-        self.prefix  = global_args.out_prefix + '.dbo'
-        self.bk_file = self.prefix + '.bk.bed'
-        self.peak_file = self.prefix + '.bk.peak' 
-        self.peak2d_file = self.prefix + '.bk.peak2d'
-        #self.nonadjcent_empirical_distribution_file = global_args.out_prefix + '.nonadjacent_distribution.txt'
-        #self.twin_empirical_dist_file = global_args.out_prefix +'.twin_empirical_dist.txt'
+        self.prefix  = global_args.out_prefix
         
-        self.chr_bcd_file_list = list()
-        self.bcd11_file_list = list()
-        self.bcd12_file_list = list()
-        self.bcd13_file_list = list()
-        for tid in range(0, len(global_args.tid2chrname)):
-            chr_bcd_file = global_args.out_prefix + '.tid_' + str(tid) + '.bcd'
-            bcd11_file   = global_args.out_prefix + '.tid_' + str(tid) + '.bcd11'
-            bcd12_file   = global_args.out_prefix + '.tid_' + str(tid) + '.bcd12'
-            bcd13_file   = global_args.out_prefix + '.tid_' + str(tid) + '.bcd13'
-            self.chr_bcd_file_list.append(chr_bcd_file)
-            self.bcd11_file_list.append(bcd11_file)
-            self.bcd12_file_list.append(bcd12_file)
-            self.bcd13_file_list.append(bcd13_file)
+        self.bcd11_file = self.prefix + '.bcd11' # twin window file 
+        self.bcd12_file = self.prefix + '.bcd12' # twin window file plus centroid
+        self.bcd13_file = self.prefix + '.bcd13' # twin window file plus predicted num of barcodes
         
         ### parameters for analysis ###
         self.bin_size = 100 
-        if global_args.is_wgs:
-            self.win_size = 100 
-        else:
-            self.win_size = 500 
-
-        #self.num_random_bk_pairs = 20000 ### number of random bk pairs for calculating nonadjcent_empirical_distribution
         self.min_bcd_num = 50 
-        self.min_dist_random_bk = 20000 ### min distance between random bk pairs
-        self.max_dist_random_bk = 100000 ### min distance between random bk pairs
-        self.min_distance_for_peak_calling = 10
 
-        self.min_shared_frag = 5 ### min shared fragments between two clusters to be considered as a same cluster group
-        self.min_support_barcode_cnt = 10 # min support barcode count for two clusters to be considered as a paired breakpoint loci
 
-    def copy(self):
-        return copy.deepcopy(self)
 
 class endpoint_parameter:
     def __init__(self, global_args):
@@ -296,17 +282,20 @@ def parse_user_arguments():
     parser.add_argument('--gap_region_bed', required = False, metavar = 'BED', type = str, default = '', help ='reference gap region in bed format, required if --ref_version is not specified')
     parser.add_argument('--black_region_bed', required = False, metavar = 'BED', type = str, default = '', help ='black region in bed format, required if --ref_version is not specified')
     parser.add_argument('-t', '--n_thread', required = False, metavar = 'num_thread', type = int, default = 1, help ='number of threads (default: 4)')
-    parser.add_argument('-q', '--min_mapq', required = False, metavar = 'min_map_qual', type = int, default = 20, help ='minimal map quality of reads used for analysis (default: 20)')
     parser.add_argument('--min_fragment_length', metavar = 'INT', required = False, type = int, default = -1, help ='minimal fragment length considered for SV calling')
+    parser.add_argument('--min_reads_in_fragment', metavar = 'INT', required = False, type = int, default = -1, help ='minimal number of confidently mapped reads in one fragment')
     parser.add_argument('--min_supp_barcodes', metavar = 'INT', required = False, type = int, default = 10, help ='minimal number of shared barcodes between two SV breakpoints (default: 10)')
     parser.add_argument('--samtools', required = False, metavar = 'path/to/samtools', type = str, default = 'samtools', help ='path to samtools (default: find in environmental path)')
     parser.add_argument('--bedtools', required = False, metavar = 'path/to/bedtools', type = str, default = 'bedtools', help ='path to bedtools (default: find in environmental path)')
     parser.add_argument('--wgs', dest='is_wgs', action='store_true', help='the input is whole-genome sequencing data')
     parser.add_argument('--targeted', dest='is_wgs', action='store_false', help='the input is targeted region sequencing data (such as WES)')
+    parser.add_argument('--germline_mode', dest='germline_mode', action='store_true', help='detect germline SVs')
+    parser.add_argument('--somatic_mode', dest='germline_mode', action='store_false', help='detect somatic SVs (with low variant allele frequency)')
+    parser.set_defaults(germline_mode = True)
     parser.set_defaults(is_wgs = True)
     parser.add_argument('--target_region', required = False, metavar = 'BED', type = str, default = '', help ='bed file of target regions (required if --targeted is specified)')
     parser.add_argument('--gap_distance_cut_off', required = False, metavar = 'INT', type = int, default = -1, help ='max distance between two reads in a HMW DNA molecule (default: automatically determined)')
-    parser.add_argument('--rm_temp_files', required = False, metavar = 'INT', type = int, default = 1, help ='remove intermediate files after the run. The value should be 1 (True) or 0 (False). (default: 1)')
+    parser.add_argument('--save_temp_files', dest='save_temp_files', action='store_true', help='Do not remove intermediate files after the run. Use in debug mode. Default: False')
 
     input_args = parser.parse_args()
 

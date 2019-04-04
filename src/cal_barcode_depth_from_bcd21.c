@@ -52,6 +52,9 @@ static int cal_barcode_depth_from_bcd21 (const char * bcd21_file, const char * o
 	int curr_tid;
 	int new_tid;
 	double high_depth, total_depth;
+	int flag;
+	int hap_type;
+	char * read_id;
 
 	INT_LIST ** wg_high_mapq_bcd_depth_list;
 	INT_LIST ** wg_total_bcd_depth_list;
@@ -66,6 +69,7 @@ static int cal_barcode_depth_from_bcd21 (const char * bcd21_file, const char * o
 	line = (char *) calloc (LINE_MAX, sizeof(char));
 	curr_bcd = (char *) calloc (128, sizeof(char));
 	new_bcd = (char *) calloc (128, sizeof(char));
+	read_id = (char *) calloc (LINE_MAX, sizeof(char));
 
 	chr_length_list = get_chr_length_from_faidx_file(faidx_file);
 	n_chr = chr_length_list->size;    
@@ -104,7 +108,9 @@ static int cal_barcode_depth_from_bcd21 (const char * bcd21_file, const char * o
 	while (gzgets(bcd21_fp, line, LINE_MAX))
 	{
 		if (line[0] == '#') { continue; }
-		sscanf(line, "%d\t%d\t%d\t%d\t%s\t%*s\n", &new_tid, &start_pos, &end_pos, &mapq, new_bcd);
+		sscanf(line, "%d\t%d\t%d\t%d\t%s\t%d\t%s\t%d\t%*s\n", &new_tid, &start_pos, &end_pos, &mapq, new_bcd, &hap_type, read_id, &flag);
+		if (flag & (256 + 1024 + 2048) ){ continue; }
+
 		avg_pos = (start_pos + end_pos) / 2;
 		if (total_read_pos_list->size == 0)
 		{
@@ -167,6 +173,7 @@ static int cal_barcode_depth_from_bcd21 (const char * bcd21_file, const char * o
 	}
 
 	fclose(out_fp);
+	gzclose(bcd21_fp);
 
 	for (int tid = 0; tid < n_chr; tid++)
 	{
@@ -185,6 +192,7 @@ static int cal_barcode_depth_from_bcd21 (const char * bcd21_file, const char * o
 	free(line);
 	free(curr_bcd);
 	free(new_bcd);
+	free(read_id);
 
 	return 0;
 }

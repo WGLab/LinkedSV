@@ -19,6 +19,7 @@ from scripts import quantify2bkcand
 from scripts import merge_quantified_calls 
 from scripts import filter_calls
 from scripts import arguments
+from scripts import visualize_sv_calls
 
 
 tab = '\t'
@@ -41,17 +42,8 @@ def main():
 
     detect_increased_fragment_ends(args, dbo_args, endpoint_args)
 
-    ## find paired breakpoints ##
-    if args.global_distribution_calculated == False: 
-        global_distribution.estimate_global_distribution(args, dbo_args, endpoint_args, endpoint_args.bcd22_file, is_fast_mode = False)
+    detect_decreased_barcode_overlap(args, dbo_args, endpoint_args)
 
-    task = 'searching for paired breakpoints'
-    if args.run_from_begining == False and my_utils.check_file_exists(args.bk_cand_pair_file) == True:
-        my_utils.myprint('paired breakpoint file existed, skipped %s' % (task))
-    else:
-        my_utils.myprint(task)
-        find_paired_bk.find_paired_bk(args, dbo_args, endpoint_args)
-        gc.collect()
 
     ## quantification ##
     task = 'quantifying SV candidates'
@@ -60,7 +52,8 @@ def main():
     else:
         my_utils.myprint(task)
         quantify2bkcand.quantify2bkcand(args, dbo_args, endpoint_args)
-        gc.collect()
+    
+    gc.collect()
 
     ## merge calls ##
     task = 'merging SV candidates'
@@ -69,11 +62,17 @@ def main():
     else:
         my_utils.myprint(task)
         merge_quantified_calls.merge_quantified_calls(args, dbo_args, endpoint_args)
-        gc.collect()
-
-    ## filter calls ##
+    
+    gc.collect()
 
     filter_calls.filter_calls(args, dbo_args, endpoint_args)
+
+    gc.collect()
+
+    image_out_dir = os.path.join(args.out_dir, 'images')
+    my_utils.make_dir(image_out_dir)
+
+    visualize_sv_calls.visualize_sv_calls (args.filter_bedpe_file, dbo_args.bcd13_file, endpoint_args.bcd21_file, args.faidx_file, args.cal_2d_overlapping_barcodes, args.cal_read_depth_from_bcd21, image_out_dir, args.bam_name)
 
     ## remove temp files ##
     if args.rm_temp_files: 
@@ -82,18 +81,22 @@ def main():
         args.temp_file_list.append(args.args_file)
         args.temp_file_list.append(args.stat_file)
         args.temp_file_list.append(args.global_distribution_file)
+        args.temp_file_list.append(args.node35_file)
+        args.temp_file_list.append(args.node33_file)
+        args.temp_file_list.append(args.node53_file)
+        args.temp_file_list.append(args.node55_file)
         args.temp_file_list.append(args.node_cluster33_file)
         args.temp_file_list.append(args.node_cluster35_file)
         args.temp_file_list.append(args.node_cluster53_file)
         args.temp_file_list.append(args.node_cluster55_file)
-        args.temp_file_list.append(endpoint_args.bcd21_file)
         args.temp_file_list.append(args.quantified_bk_pair_file)
         args.temp_file_list.append(args.bk_cand_pair_file)
         args.temp_file_list.append(endpoint_args.bcd22_file)
         args.temp_file_list.append(args.weird_reads_file)
         args.temp_file_list.append(endpoint_args.low_mapq_bcd21_file)
         args.temp_file_list.append(endpoint_args.bcd21_file + '.split')
-        args.temp_file_list.append(endpoint_args.bcd21_file)
+        args.temp_file_list.append(dbo_args.bcd11_file)
+        args.temp_file_list.append(dbo_args.bcd12_file)
 
 
         for temp_file in args.temp_file_list:
@@ -103,57 +106,61 @@ def main():
 
 def detect_decreased_barcode_overlap (args, dbo_args, endpoint_args):
 
-    gc.enable()
-    bam = args.bam
-    out_prefix = args.out_prefix
-    min_mapq = args.min_mapq
-    n_thread = args.n_thread
-    bin_size = dbo_args.bin_size
-    win_size = dbo_args.win_size
-    output_bk_candidate_file = dbo_args.bk_file 
-    min_distance = dbo_args.min_distance_for_peak_calling 
+    if args.is_wgs:
+        win_size = 10000
+    else:
+        win_size = 40000
     
-    bcd12_existed = True 
-    for bcd12_file in dbo_args.bcd12_file_list:
-        if my_utils.check_file_exists(bcd12_file) == False:
-            bcd12_existed = False 
-            break
-
-	###  count barcode overlap | output files: bcd11 and bcd12 ###
-    if args.run_from_begining == False and bcd12_existed:
-        my_utils.myprint ('bcd12 files existed, skipped counting barcode overlap...')
+    ### calculating read depth | output file: args.read_depth_file
+    task = 'calculating read depth'
+    if args.run_from_begining == False and my_utils.check_file_exists(args.read_depth_file) == True:
+        my_utils.myprint ('read depth file existed, skipped %s' % task)
     else:
-        my_utils.myprint ('start counting barcode overlap...')
-        count_barcode_overlap(args, dbo_args, endpoint_args)
-        my_utils.myprint ('finished counting barcode overlap...')
-
-    gc.collect()
-
-	### calculate expected overlap | output files: bcd13 ###
-    bcd13_existed = True
-    for bcd13_file in dbo_args.bcd13_file_list:
-        if my_utils.check_file_exists(bcd13_file) == False:
-            bcd13_existed = False
-            break
-
-    if args.run_from_begining == False and bcd13_existed:
-        my_utils.myprint ('bcd13 files existed, skipped calculating expected overlapped barcodes...')
+        my_utils.myprint (task)
+        cmd_args_list = [args.cal_read_depth_from_bcd21, endpoint_args.bcd21_file, args.read_depth_file, args.faidx_file, str(dbo_args.bin_size), str(args.min_mapq) ]
+        my_utils.myprint('running command: %s' % (' '.join(cmd_args_list) ) ) 
+        subprocess.call( cmd_args_list ) 
+        my_utils.myprint ('finished %s' % task)
+       
+	### counting overlapping barcodes | output files dbo_args.bcd11_file
+    task = 'counting overlapping barcodes between twin windows'
+    if args.run_from_begining == False and my_utils.check_file_exists(dbo_args.bcd11_file) == True:
+        my_utils.myprint ('bcd11 files existed, skipped %s' % task )
     else:
-        my_utils.myprint ('start calculating expected overlapped barcodes...')
-        cal_expected_overlap_bcd_cnt (args, dbo_args, endpoint_args) 
-        my_utils.myprint ('finished calculating expected overlapped barcodes...')
+        my_utils.myprint (task)
+        cmd_args_list = [args.cal_twin_win_bcd_cnt, endpoint_args.bcd21_file, dbo_args.bcd11_file, args.faidx_file, str(dbo_args.bin_size), str(win_size), str(args.min_mapq)]
+        my_utils.myprint('running command: %s' % (' '.join(cmd_args_list) ) ) 
+        subprocess.call( cmd_args_list )
+        my_utils.myprint ('finished %s' % task)
 
-    gc.collect()
-
-	### peak calling for overlap statistic | output files: output_bk_candidate_file ##
-    if args.run_from_begining == False and my_utils.check_file_exists(output_bk_candidate_file):
-        my_utils.myprint ('dbo peak file existed, skipped peak calling')
+    ### calculating centroid | output file: dbo_args.bcd12_file 
+    task = 'calculating centroid'
+    if args.run_from_begining == False and my_utils.check_file_exists(dbo_args.bcd12_file) == True:
+        my_utils.myprint ('bcd12 files existed, skipped %s' % task )
     else:
-        my_utils.myprint ('start peak calling...')
-        peak_calling1 (args, dbo_args, endpoint_args)
-        my_utils.myprint ('finished peak calling...')
+        my_utils.myprint (task)
+        cmd_args_list = [args.cal_centroid_from_read_depth, args.read_depth_file, dbo_args.bcd11_file, dbo_args.bcd12_file, args.faidx_file]
+        my_utils.myprint('running command: %s' % (' '.join(cmd_args_list) ) ) 
+        subprocess.call( cmd_args_list )
+        my_utils.myprint ('finished %s' % task)
 
-    gc.collect()
+	### calculating expected overlap | output file: dbo_args.bcd13_file
+
+    task = 'calculating barcode similarity and p-value'
+    if args.run_from_begining == False and my_utils.check_file_exists(dbo_args.bcd13_file) == True:
+        my_utils.myprint ('bcd12 files existed, skipped %s' % task )
+    else:
+        my_utils.myprint (task)
+        if args.is_wgs:
+            is_wgs = 1
+        else:
+            is_wgs = 0
+
+        cmd_args_list = [args.cal_expected_overlap_value, dbo_args.bcd12_file, dbo_args.bcd13_file, str(is_wgs)]
+        my_utils.myprint('running command: %s' % (' '.join(cmd_args_list) ) ) 
+        subprocess.call( cmd_args_list ) 
+        my_utils.myprint ('finished %s' % task)
+
     return 
     
 
@@ -161,7 +168,7 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
 
     gc.enable()
 
-    ### 1 clustering reads | output file: bcd22 file
+    ### clustering reads | output file: bcd22 file
     task = 'clustering reads'
 
     if args.run_from_begining == False and my_utils.check_file_exists (endpoint_args.bcd22_file):
@@ -172,7 +179,7 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
     
     gc.collect()
 
-    ### 2 searching for extremely high coverage region  
+    ### searching for extremely high coverage region  
 
     task = 'searching for extremely high coverage region'
     if args.run_from_begining == False and my_utils.check_file_exists (endpoint_args.barcode_cov_file):
@@ -181,12 +188,25 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
         my_utils.myprint(task)
         get_high_coverage_regions.get_high_coverage_regions(args, dbo_args, endpoint_args) 
 
-    ### 3 estimating distribution parameters
+    gc.collect()
+
+    ### estimating distribution parameters
 
     if args.global_distribution_calculated == False: 
         global_distribution.estimate_global_distribution(args, dbo_args, endpoint_args, endpoint_args.bcd22_file)
 
     arguments.output_arguments2file(args, dbo_args, endpoint_args)
+
+    gc.collect()
+
+    ## find paired breakpoints ##
+
+    task = 'searching for paired breakpoints'
+    if args.run_from_begining == False and my_utils.check_file_exists(args.bk_cand_pair_file) == True:
+        my_utils.myprint('paired breakpoint file existed, skipped %s' % (task))
+    else:
+        my_utils.myprint(task)
+        find_paired_bk.find_paired_bk(args, dbo_args, endpoint_args)
 
     gc.collect()
 

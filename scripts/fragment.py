@@ -7,9 +7,9 @@ from my_utils import *
 class Fragment:
     def __init__(self, attr_list):
 
-        self.tid, self.start, self.end, self.length, self.bcd, self.frag_id, self.num_reads, self.hp0, self.hp1, self.hp2, self.map_pos = attr_list[0:11]
-        self.n_left_weird_reads, self.n_right_weird_reads = attr_list[11:13]
-        self.left_weird_reads_output, self.right_weird_reads_output, self.other_weird_reads_output = attr_list[13:16]
+        self.tid, self.start, self.end, self.length, self.bcd, self.frag_id, self.num_reads, self.hp0, self.hp1, self.hp2, self.map_pos, self.map_qual = attr_list[0:12]
+        self.n_left_weird_reads, self.n_right_weird_reads = attr_list[12:14]
+        self.left_weird_reads_output, self.right_weird_reads_output, self.other_weird_reads_output = attr_list[14:17]
 
         self.tid       = int(self.tid)  
         self.start     = int(self.start)
@@ -26,7 +26,7 @@ class Fragment:
         self.key       = self.tid * FIX_LENGTH + self.start
 
     def output(self):
-        outstring = '%d\t%d\t%d\t%d\t%s\t%d\t%d\t%d\t%d\t%d\t%s\t' % (self.tid, self.start, self.end, self.length, self.bcd, self.frag_id, self.num_reads, self.hp0, self.hp1, self.hp2, self.map_pos)
+        outstring = '%d\t%d\t%d\t%d\t%s\t%d\t%d\t%d\t%d\t%d\t%s\t%s\t' % (self.tid, self.start, self.end, self.length, self.bcd, self.frag_id, self.num_reads, self.hp0, self.hp1, self.hp2, self.map_pos, self.map_qual)
         outstring += '%d\t%d\t%s\t%s\t%s' % (self.n_left_weird_reads, self.n_right_weird_reads, self.left_weird_reads_output, self.right_weird_reads_output, self.other_weird_reads_output)
 
         return outstring

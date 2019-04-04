@@ -30,6 +30,10 @@ def main():
 
 def quantify2bkcand(args, dbo_args, endpoint_args):
 
+    myprint('reading bcd13 file: %s' % (dbo_args.bcd13_file))
+    twin_windows_p_value_list = get_p_value_from_bcd13_file(dbo_args.bcd13_file, args.faidx_file, dbo_args.bin_size)
+    myprint('finished reading bcd13 file: %s' % (dbo_args.bcd13_file))
+
     myprint('estimation global parameters')
     if args.global_distribution_calculated == False:
         global_distribution.estimate_global_distribution(args, dbo_args, endpoint_args, endpoint_args.bcd22_file)
@@ -144,7 +148,7 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
     i = 0
     for i in range(0, len(paired_bk_cand_list)):
         paired_bk_cand = paired_bk_cand_list[i]
-        quantified_bk_cand = quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list)
+        quantified_bk_cand = quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list, twin_windows_p_value_list)
         if (i+1) % 1000 == 0: myprint('quantified %d candidate calls' % (i+1))
         if quantified_bk_cand == None: continue
         quantified_bk_cand_list.append(quantified_bk_cand)
@@ -162,7 +166,39 @@ def quantify2bkcand(args, dbo_args, endpoint_args):
     del bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list
     return 
 
+def get_p_value_from_bcd13_file(bcd13_file, faidx_file, bin_size):
 
+    chr_len_list = get_chr_length(faidx_file)
+    n_chr = len(chr_len_list)
+
+    twin_windows_p_value_list = [0] * n_chr
+    for tid in range(0, n_chr):
+        chr_len = chr_len_list[tid]
+        n_bin = int(chr_len / bin_size + 2)
+        twin_windows_p_value_list[tid] = [0] * n_bin
+
+    bcd13_fp = open(bcd13_file, 'r')
+
+    while 1:
+        line = bcd13_fp.readline()
+        if not line: break
+        if line[0] == '#': continue
+        line = line.strip().split(tab)
+        tid = int(line[0])
+        pos = int(line[1])
+        p_value = float(line[8])
+        idx = pos / bin_size
+        if tid > len(twin_windows_p_value_list)-1 or idx > len(twin_windows_p_value_list[tid])-1 :
+            myprint('ERROR! bcd13_file does not match with faidx_file!')
+            myprint('tid=%d, pos=%d, len(twin_windows_p_value_list)=%d, len(twin_windows_p_value_list[%d]=%d' % (tid, pos, len(twin_windows_p_value_list), tid, len(twin_windows_p_value_list[tid])))
+            sys.exit()
+
+        twin_windows_p_value_list[tid][idx] = p_value
+
+    bcd13_fp.close()
+    
+    return twin_windows_p_value_list
+   
 def get_target_region_frm_from_bcd22_file(bcd22_file, merge_candidate_region_R_list, merge_candidate_region_L_list, min_frm_length):
 
     frm_list = list()
@@ -267,6 +303,10 @@ def split_same_fragment(args, same_fragment_list):
             new_num_reads2 = frm.num_reads - new_num_reads1
             new_map_pos1 = ';'.join(map_pos[0:max_gap_index]) + ';'
             new_map_pos2 = ';'.join(map_pos[max_gap_index:]) + ';'
+
+            new_map_qual1 = frm.map_qual[0:max_gap_index]
+            new_map_qual2 = frm.map_qual[max_gap_index:]
+
             new_frag_id1 = frm.frag_id + int(1e12)
             new_frag_id2 = frm.frag_id + int(2e12)
 
@@ -318,10 +358,10 @@ def split_same_fragment(args, same_fragment_list):
                 other_weird_reads_output2 = convert_reads_info_list_to_string (new_other_weird_reads_list2)
                 
 
-            new_attr_list1 = [frm.tid, new_start1, new_end1, new_end1-new_start1, frm.bcd, new_frag_id1, new_num_reads1, frm.hp0, frm.hp1, frm.hp2, new_map_pos1, n_left_weird_reads1, n_right_weird_reads1, left_weird_reads_output1, right_weird_reads_output1, other_weird_reads_output1]
+            new_attr_list1 = [frm.tid, new_start1, new_end1, new_end1-new_start1, frm.bcd, new_frag_id1, new_num_reads1, frm.hp0, frm.hp1, frm.hp2, new_map_pos1, new_map_qual1, n_left_weird_reads1, n_right_weird_reads1, left_weird_reads_output1, right_weird_reads_output1, other_weird_reads_output1]
             new_frm1 = Fragment(new_attr_list1)
 
-            new_attr_list2 = [frm.tid, new_start2, new_end2, new_end2-new_start2, frm.bcd, new_frag_id2, new_num_reads2, frm.hp0, frm.hp1, frm.hp2, new_map_pos2, n_left_weird_reads2, n_right_weird_reads2, left_weird_reads_output2, right_weird_reads_output2, other_weird_reads_output2]
+            new_attr_list2 = [frm.tid, new_start2, new_end2, new_end2-new_start2, frm.bcd, new_frag_id2, new_num_reads2, frm.hp0, frm.hp1, frm.hp2, new_map_pos2, new_map_qual2, n_left_weird_reads2, n_right_weird_reads2, left_weird_reads_output2, right_weird_reads_output2, other_weird_reads_output2]
             new_frm2 = Fragment(new_attr_list2)
 
             split_same_fragment_list1.append(new_frm1)
@@ -351,7 +391,7 @@ def get_region_frm_list (tid, start, end, endtype, start_sorted_frm_list, end_so
 
     return frm_list
 
-def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list):
+def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22_frm_list, start_sorted_frm_list, end_sorted_frm_list, start_key_list, end_key_list, twin_windows_p_value_list):
  
     paired_bk_cand.format_self(args.chrname2tid)
     tid1 = paired_bk_cand.tid1(args.chrname2tid)
@@ -422,7 +462,13 @@ def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22
     total_logp_gap_ontarget, total_logp_gap_offtarget, total_logp_frm_length = logp_nosv_one_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
     logp_barcode = logp_nosv_two_mol(args, dbo_args, endpoint_args, shared_fragment_list1, shared_fragment_list2, endtype1, endtype2)
 
-    llr_barcode_overlapping = min(max(total_logp_gap_ontarget, total_logp_frm_length)/1.5, logp_barcode) + 3 * n_readpair_support 
+    idx1 = int(bk1_pos/dbo_args.bin_size)
+    idx2 = int(bk2_pos/dbo_args.bin_size)
+
+    dbo_score1 = twin_windows_p_value_list[tid1][idx1]
+    dbo_score2 = twin_windows_p_value_list[tid2][idx2]
+
+    llr_barcode_overlapping = min(max(total_logp_gap_ontarget, total_logp_frm_length)/1.5, logp_barcode) + 3 * n_readpair_support + dbo_score1 + dbo_score2
     llg1 = total_logp_gap_ontarget 
     llg2 = total_logp_gap_offtarget
     llg3 = total_logp_frm_length 
@@ -442,7 +488,7 @@ def quantify1paired_bk_cand(args, dbo_args, endpoint_args, paired_bk_cand, bcd22
     else:
         svlength = 'N.A.'
 
-    attr_list = [chrm1, bk1_pos, bk1_pos+1, chrm2, bk2_pos, bk2_pos+1, predicted_svtype, svlength, len(shared_fragment_list1), predicted_endtype1, predicted_endtype2, llr_barcode_overlapping, llg1, llg2, llg3, llg4, svtype_logp, endtype1_logp, endtype2_logp, start1_logp, end1_logp, start2_logp, end2_logp, shared_fragment_ids1, shared_fragment_ids2, support_barcodes, tid1, tid2, n_readpair_support]
+    attr_list = [chrm1, bk1_pos, bk1_pos+1, chrm2, bk2_pos, bk2_pos+1, predicted_svtype, svlength, len(shared_fragment_list1), predicted_endtype1, predicted_endtype2, llr_barcode_overlapping, llg1, llg2, llg3, llg4, dbo_score1, dbo_score2, svtype_logp, endtype1_logp, endtype2_logp, start1_logp, end1_logp, start2_logp, end2_logp, shared_fragment_ids1, shared_fragment_ids2, support_barcodes, tid1, tid2, n_readpair_support]
 
     quantified_bk_cand = QuantifiedBKCand(attr_list)
     

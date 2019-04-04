@@ -68,7 +68,7 @@ def main():
     return 
 
 
-def create_nodes_for_frm_list(same_bcd_frm_list):
+def create_nodes_for_frm_list(same_bcd_frm_list, min_frag_length):
 
     node_list33 = list()
     node_list55 = list()
@@ -80,6 +80,7 @@ def create_nodes_for_frm_list(same_bcd_frm_list):
         for j in range(i+1, len(same_bcd_frm_list)):
             frm1 = same_bcd_frm_list[i]
             frm2 = same_bcd_frm_list[j]
+            if frm1.length + frm2.length < min_frag_length: continue
 
             node33 = EndpointNode(frm1.key_end(), frm2.key_end(), frm1.frag_id, frm2.frag_id) 
             node55 = EndpointNode(frm1.key_start(), frm2.key_start(), frm1.frag_id, frm2.frag_id) 
@@ -105,7 +106,11 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
 
         myprint('building nodes from fragments')
         myprint('reading bcd22 file:%s' % endpoint_args.bcd22_file)
-        all_potential_frm_list = read_bcd22_file_core(endpoint_args.bcd22_file, endpoint_args.min_frag_length) # all fragments that are longer than min_frag_length
+        if args.is_wgs == True:
+            min_frag_length = endpoint_args.min_frag_length
+        else:
+            min_frag_length = 0
+        all_potential_frm_list = read_bcd22_file_core(endpoint_args.bcd22_file, min_frag_length) # all fragments that are longer than min_frag_length
         myprint('total number of fragments: %d' % (len(all_potential_frm_list)))
         all_potential_frm_list.sort(key = lambda frm: frm.bcd)
         myprint('writing to node file')
@@ -121,7 +126,7 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
             if frm.bcd == same_bcd_frm_list[0].bcd:
                 same_bcd_frm_list.append(frm)
             else:
-                node_list33, node_list55, node_list53, node_list35 = create_nodes_for_frm_list(same_bcd_frm_list) 
+                node_list33, node_list55, node_list53, node_list35 = create_nodes_for_frm_list(same_bcd_frm_list, endpoint_args.min_frag_length) 
                 ouput_node_list2file(node_list33, node33_fp)
                 ouput_node_list2file(node_list55, node55_fp)
                 ouput_node_list2file(node_list53, node53_fp)

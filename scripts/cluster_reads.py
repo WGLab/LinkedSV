@@ -123,6 +123,14 @@ def cluster_reads(args, dbo_args, endpoint_args):
 
 def bcd21_to_bcd22_file(args, bcd21_file, bcd22_file, length_cut, split_barcode_set, is_fast_mode = True, with_weird_reads = False):
 
+    if args.is_wgs:
+        min_num_good_reads = 6 
+    else:
+        min_num_good_reads = 3 
+
+    if args.user_defined_min_reads_in_fragment > 0:
+        min_num_good_reads = args.user_defined_min_reads_in_fragment
+
     weird_readname_dict = dict()
 
     if with_weird_reads == True:
@@ -134,13 +142,11 @@ def bcd21_to_bcd22_file(args, bcd21_file, bcd22_file, length_cut, split_barcode_
         weird_readname_dict = get_weird_readname_dict (chrname2tid_dict, weird_reads_file)
         myprint('finished getting weird read names')
 
-    if bcd21_file[-2:] == 'gz':
-        bcd21_fp = gzip.open(bcd21_file, 'r')
-    else:
-        bcd21_fp = open(bcd21_file, 'r')
+    bcd21_fp = my_utils.gzopen(bcd21_file, 'r')
 
     bcd22_fp = open(bcd22_file, 'w')
-    bcd22_fp.write('#tid\tfrag_start\tfrag_end\tfrag_length\tfrag_barcode\tfrag_ID\tnum_reads\thptype0\thptype1\thptype2\tmap_pos\tnum_left_weird_reads\tnum_right_weird_reads\tleft_weird_reads_info\tright_weird_reads_info\tother_weird_reads_info; gap_distance_cut_off=%d\n' % (length_cut))
+    bcd22_header = '#tid\tfrag_start\tfrag_end\tfrag_length\tfrag_barcode\tfrag_ID\tnum_reads\thptype0\thptype1\thptype2\tmap_pos\tmap_qual\tnum_left_weird_reads\tnum_right_weird_reads\tleft_weird_reads_info\tright_weird_reads_info\tother_weird_reads_info; gap_distance_cut_off=%d\n' % (length_cut)
+    bcd22_fp.write(bcd22_header)
 
     fragment_bcd21_list = list()
 
@@ -151,19 +157,13 @@ def bcd21_to_bcd22_file(args, bcd21_file, bcd22_file, length_cut, split_barcode_
         if line[0] == '#': continue
         line = line.strip().split(tab)
         new_bcd21_term = Bcd21(line)
-        if  new_bcd21_term.mapq < args.min_mapq: continue
-        flag = new_bcd21_term.flag 
-
-        if flag & 256 or flag & 1024 or flag & 2048: continue 
-
         bcd = new_bcd21_term.bcd
-
         read_id = new_bcd21_term.read_id
 
         if with_weird_reads == True and bcd in split_barcode_set:
 
-            bcd22 = convert_bcd21list_to_bcd22 (fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict)
-            bcd22_fp.write(bcd22.output() + endl)
+            bcd22 = convert_bcd21list_to_bcd22(args, fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict)
+            if n_good_reads(bcd22) >= min_num_good_reads: bcd22_fp.write(bcd22.output() + endl)
             frag_id += 1
             fragment_bcd21_list = list()
             fragment_bcd21_list.append(new_bcd21_term)
@@ -179,8 +179,8 @@ def bcd21_to_bcd22_file(args, bcd21_file, bcd22_file, length_cut, split_barcode_
         if len(fragment_bcd21_list) == 0 or ( new_bcd21_term.bcd == fragment_bcd21_list[-1].bcd and new_bcd21_term.key_start() - fragment_bcd21_list[-1].key_end() < length_cut):
             fragment_bcd21_list.append(new_bcd21_term)
         else:
-            bcd22 = convert_bcd21list_to_bcd22 (fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict)
-            bcd22_fp.write(bcd22.output() + endl)
+            bcd22 = convert_bcd21list_to_bcd22 (args, fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict)
+            if n_good_reads(bcd22) >= min_num_good_reads: bcd22_fp.write(bcd22.output() + endl)
             frag_id += 1
             fragment_bcd21_list = list()
             fragment_bcd21_list.append(new_bcd21_term)
@@ -188,8 +188,8 @@ def bcd21_to_bcd22_file(args, bcd21_file, bcd22_file, length_cut, split_barcode_
             if frag_id % 1000000 == 0: myprint('grouped %d fragments' % frag_id)
 
     if len(fragment_bcd21_list) > 0:
-        bcd22 = convert_bcd21list_to_bcd22 (fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict)
-        bcd22_fp.write(bcd22.output() + endl)
+        bcd22 = convert_bcd21list_to_bcd22 (args, fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict)
+        if n_good_reads(bcd22) >= min_num_good_reads: bcd22_fp.write(bcd22.output() + endl)
 
     bcd21_fp.close()
     bcd22_fp.close()
@@ -200,8 +200,15 @@ def bcd21_to_bcd22_file(args, bcd21_file, bcd22_file, length_cut, split_barcode_
 
     return
 
+def n_good_reads(frm):
 
-def convert_bcd21list_to_bcd22(fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict):
+    num_good_reads = 0
+    for i in range(0, len(frm.map_qual)):
+        if frm.map_qual[i] == '1': num_good_reads += 1
+    return num_good_reads
+
+
+def convert_bcd21list_to_bcd22(args, fragment_bcd21_list, frag_id, is_fast_mode, weird_readname_dict):
     
     frm_tid   = fragment_bcd21_list[0].tid 
     frm_start = fragment_bcd21_list[0].start
@@ -211,14 +218,22 @@ def convert_bcd21list_to_bcd22(fragment_bcd21_list, frag_id, is_fast_mode, weird
     num_reads = len(fragment_bcd21_list)
     hptype = [0] * 3
     map_pos = ''
+    map_qual = ''
 
+    bad_flag = 256 + 1024 + 2048
     for bcd21 in fragment_bcd21_list:
         hptype[bcd21.hptype] += 1
         map_pos += '%d,%d;' % (bcd21.start, bcd21.end)
+        if bcd21.mapq < args.min_mapq or bcd21.flag & bad_flag: 
+            q = '0'
+        else:
+            q = '1'
+        map_qual += q
+
     map_pos = map_pos.strip(';') 
 
     if is_fast_mode:
-        attr_list = [frm_tid, frm_start, frm_end, frm_length, frm_bcd, frag_id, num_reads, hptype[0], hptype[1], hptype[2], map_pos]  
+        attr_list = [frm_tid, frm_start, frm_end, frm_length, frm_bcd, frag_id, num_reads, hptype[0], hptype[1], hptype[2], map_pos, map_qual]
         attr_list += [0, 0, '.', '.', '.']
         return Fragment(attr_list)
         
@@ -261,10 +276,11 @@ def convert_bcd21list_to_bcd22(fragment_bcd21_list, frag_id, is_fast_mode, weird
     if right_weird_reads_output == '': right_weird_reads_output = '.'
     if other_weird_reads_output == '': other_weird_reads_output = '.'
 
-    attr_list = [frm_tid, frm_start, frm_end, frm_length, frm_bcd, frag_id, num_reads, hptype[0], hptype[1], hptype[2], map_pos ]  
+    attr_list = [frm_tid, frm_start, frm_end, frm_length, frm_bcd, frag_id, num_reads, hptype[0], hptype[1], hptype[2], map_pos, map_qual]  
     attr_list += [n_left_weird_reads, n_right_weird_reads, left_weird_reads_output, right_weird_reads_output, other_weird_reads_output]
 
-    return Fragment(attr_list)
+    frm = Fragment(attr_list)
+    return frm
 
 def calculate_num_reads_from_bcd21_file(in_bcd21_file, min_mapq):
 
@@ -282,11 +298,6 @@ def calculate_num_reads_from_bcd21_file(in_bcd21_file, min_mapq):
     in_bcd21_fp.close()
 
     return n_reads
-
-
-
-
-
 
 
 if __name__ == '__main__':

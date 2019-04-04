@@ -262,3 +262,12 @@ def chrname_set_2_tid_set(chrname_set, chrname2tid_dict):
             tid_set.add(tid)
 
     return tid_set
+
+def make_dir(out_dir):
+
+    try:
+        os.makedirs(out_dir)
+    except:
+        if not os.path.isdir(out_dir): raise
+
+    return

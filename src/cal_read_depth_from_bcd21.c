@@ -19,6 +19,10 @@ int get_read_depth_from_read_bcd21_file(const char * bcd21_file, INT_LIST ** wg_
     int idx;
     int line_cnt = 0;
 
+	int flag;
+	int hap_type;
+	
+
     line = (char *) calloc (LINE_MAX, sizeof(char));
     bcd21_fp = gzopen(bcd21_file, "r");
 
@@ -30,11 +34,13 @@ int get_read_depth_from_read_bcd21_file(const char * bcd21_file, INT_LIST ** wg_
     while (gzgets(bcd21_fp, line, LINE_MAX))
     {
         if (line[0] == '#') { continue; }
-        sscanf(line, "%d\t%d\t%d\t%d\t%*s\n", &tid, &start_pos, &end_pos, &mapq);
+        sscanf(line, "%d\t%d\t%d\t%d\t%*s\t%*s\t%*s\t%d\t%*s\n", &tid, &start_pos, &end_pos, &mapq, &flag);
 		if (tid >= n_chr){
 			fprintf(stderr, "ERROR! The faidx file and input bcd21 file don't match!\n");
 			exit(1);
 		}
+
+		if (flag & (256 + 1024 + 2048) ){ continue; }
 
 		idx = (start_pos + end_pos) / ( 2 * bin_size);
 		map_len = end_pos - start_pos;

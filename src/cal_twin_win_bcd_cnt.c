@@ -138,7 +138,7 @@ static int process_one_barcode_in_one_chr(int tid, INT_LIST * read_pos_list, INT
 	return 0;
 }
 
-static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_file, const char * faidx_file, int shift_size, int win_size)
+static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_file, const char * faidx_file, int shift_size, int win_size, int min_mapq)
 {
 	gzFile bcd21_fp;
 	FILE * out_fp;
@@ -158,6 +158,9 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 	int new_tid;
 	int mid_pos;
 	int w1_cnt, w2_cnt, ovl_cnt;
+	int flag;
+	int hap_type;
+	char * read_id;
 
 	INT_LIST ** wg_win1_cnt_list;
 	INT_LIST ** wg_win2_cnt_list;
@@ -175,6 +178,7 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 	line = (char *) calloc (LINE_MAX, sizeof(char));
 	curr_bcd = (char *) calloc (128, sizeof(char));
 	new_bcd = (char *) calloc (128, sizeof(char));
+	read_id = (char *) calloc (LINE_MAX, sizeof(char));
 
 	chr_length_list = get_chr_length_from_faidx_file(faidx_file);
 	n_chr = chr_length_list->size;    
@@ -215,7 +219,10 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 	while (gzgets(bcd21_fp, line, LINE_MAX))
 	{
 		if (line[0] == '#') { continue; }
-		sscanf(line, "%d\t%d\t%d\t%d\t%s\t%*s\n", &new_tid, &start_pos, &end_pos, &mapq, new_bcd);
+		sscanf(line, "%d\t%d\t%d\t%d\t%s\t%d\t%s\t%d\t%*s\n", &new_tid, &start_pos, &end_pos, &mapq, new_bcd, &hap_type, read_id, &flag);
+		if (flag & (256 + 1024 + 2048) ){ continue; }
+		if (mapq < min_mapq) { continue; }
+
 		avg_pos = (start_pos + end_pos) / 2;
 		if ( read_pos_list->size == 0)
 		{
@@ -267,6 +274,7 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 	}
 
 	fclose(out_fp);
+	gzclose(bcd21_fp);
 
 	for (int tid = 0; tid < n_chr; tid++)
 	{
@@ -289,14 +297,21 @@ static int cal_twin_win_bcd_cnt(const char * bcd21_file, const char * output_fil
 	free(line);
 	free(curr_bcd);
 	free(new_bcd);
+	free(read_id);
 
+	return 0;
+}
+
+int usage(FILE * fp) 
+{
+	fprintf (stderr, "Usage: cal_twin_win_bcd_cnt <input.bcd21.gz> <output_file (bcd11_file)> <faidx_file> <shift_size> <win_size> <min_mapq>\n");
 	return 0;
 }
 
 int main(int argc, char * argv[])
 {
-	if (argc < 6){ 
-		fprintf (stderr, "Usage: cal_twin_win_bcd_cnt <input.bcd21.gz> <output_file> <faidx_file> <shift_size> <win_size> \n");
+	if (argc < 7){ 
+		usage(stderr);
 		return 1;
 	}
 
@@ -305,6 +320,7 @@ int main(int argc, char * argv[])
 	char * faidx_file;
 	int shift_size;
 	int win_size; 
+	int min_mapq;
 	int ret;
 
 	bcd21_file  = argv[1]; 
@@ -313,21 +329,30 @@ int main(int argc, char * argv[])
 
 	shift_size  = atoi(argv[4]);
 	win_size    = atoi(argv[5]);
+	min_mapq    = atoi(argv[6]);
 
 	if (shift_size < 10){
 		fprintf(stderr, "ERROR! shift_size should be at least 10. Your value is: %d\n", shift_size);
+		usage(stderr);
 		exit(1);
 	}
 
 	if (win_size < 100){
 		fprintf(stderr, "ERROR! win_size should be at least 100. Your value is: %d\n", win_size);
+		usage(stderr);
+		exit(1);
+	}
+	
+	if (min_mapq < 0 || min_mapq > 30){
+		fprintf(stderr, "ERROR! min_mapq should be in the range of [0, 30]. Your value is: %d\n", min_mapq);
+		usage(stderr);
 		exit(1);
 	}
 
 	if (win_size % shift_size != 0){
 		win_size -= win_size % shift_size;
 	}
-	ret = cal_twin_win_bcd_cnt(bcd21_file, output_file, faidx_file, shift_size, win_size);
+	ret = cal_twin_win_bcd_cnt(bcd21_file, output_file, faidx_file, shift_size, win_size, min_mapq);
 
 	return ret;
 }

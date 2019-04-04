@@ -13,8 +13,8 @@ typedef struct {
 
 typedef struct {
     FRM_CORE * data_list;
-    size_t size;
-    size_t capacity;
+    int32_t size;
+    int32_t capacity;
 } FRM_CORE_LIST;
 
 static int usage(FILE * fp) 

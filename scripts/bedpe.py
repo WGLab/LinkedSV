@@ -58,7 +58,7 @@ class QuantifiedBKCandCore:
 
     def __init__(self, attr_list):
 
-        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.support_barcodes = attr_list[0:14]
+        self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.dbo_score1, self.dbo_score2, self.support_barcodes = attr_list[0:16]
 
         self.start1 = int(self.start1)
         self.end1 = int(self.end1)
@@ -67,21 +67,24 @@ class QuantifiedBKCandCore:
         self.end2 = int(self.end2)
    
         self.score = float(self.score)
+        self.dbo_score1 = float(self.dbo_score1)
+        self.dbo_score2 = float(self.dbo_score2)
 
         self.num_fragment_support = int(self.num_fragment_support)
         self.n_readpair_support = int(self.n_readpair_support)
         self.svlength = str(self.svlength)
         self.ft = '.' # filter_info
+        self.sv_id = '.'
 
     def output_core(self):
 
         supp_barcodes = self.support_barcodes.strip(',')
         outstring  = '%s\t%d\t%d\t' % (self.chrm1, self.start1, self.end1)
         outstring += '%s\t%d\t%d\t' % (self.chrm2, self.start2, self.end2)
-        outstring += '%s\t%s\t%s\t' % (self.svtype, self.svlength, self.ft)
+        outstring += '%s\t%s\t%s\t%s\t' % (self.svtype, self.sv_id, self.svlength, self.ft)
         outstring += '%d\t%d\t' % (self.num_fragment_support, self.n_readpair_support)
         outstring += '%s\t%s\t' % (self.endtype1, self.endtype2)
-        outstring += '%.4f\t%s' % (self.score, supp_barcodes)
+        outstring += '%.4f\t%.4f\t%.4f\t%s' % (self.score, self.dbo_score1, self.dbo_score2, supp_barcodes)
 
         return outstring
 
@@ -93,9 +96,10 @@ class QuantifiedBKCand:
         self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2  = attr_list[0:6]
         self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2 = attr_list[6:11]
         self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol = attr_list[11:16]
-        self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp = attr_list[16:23]
-        self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2 = attr_list[23:28]
-        self.n_readpair_support = attr_list[28] 
+        self.dbo_score1, self.dbo_score2 = attr_list[16:18]
+        self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp = attr_list[18:25]
+        self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2 = attr_list[25:30]
+        self.n_readpair_support = attr_list[30] 
 
         self.tid1 = int(self.tid1)
         self.start1 = int(self.start1)
@@ -106,6 +110,9 @@ class QuantifiedBKCand:
         self.end2 = int(self.end2)
    
         self.score = float(self.score)
+        self.dbo_score1 = float(self.dbo_score1)
+        self.dbo_score2 = float(self.dbo_score2)
+
         self.logp_nosv_one_mol = float(self.logp_nosv_one_mol)
         self.logp_nosv_two_mol = float(self.logp_nosv_two_mol)
         self.logp_sv_one_mol = float(self.logp_sv_one_mol)
@@ -129,7 +136,7 @@ class QuantifiedBKCand:
 
     def attr_list(self):
 
-        return [self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2, self.n_readpair_support] 
+        return [self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.dbo_score1, self.dbo_score2, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2, self.n_readpair_support] 
 
     def output_svcall(self):
 
@@ -138,14 +145,45 @@ class QuantifiedBKCand:
 
     def output(self):
 
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%s\t%d\t%d\t%d' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.endtype1, self.endtype2, self.score, self.logp_nosv_one_mol, self.logp_nosv_two_mol, self.logp_sv_one_mol, self.logp_sv_two_mol, self.type_score, self.endtype1_logp, self.endtype2_logp, self.start1_logp, self.end1_logp, self.start2_logp, self.end2_logp, self.support_frm_ids1, self.support_frm_ids2, self.support_barcodes, self.tid1, self.tid2, self.n_readpair_support)
+        outstring  = '%s\t%d\t%d\t%s\t%d\t%d\t' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2)
+        outstring += '%s\t' % self.svtype
+        outstring += '%s\t' % self.svlength
+        outstring += '%d\t' % self.num_fragment_support
+        outstring += '%s\t' % self.endtype1
+        outstring += '%s\t' % self.endtype2
+        outstring += '%f\t' % self.score
+        outstring += '%f\t' % self.logp_nosv_one_mol
+        outstring += '%f\t' % self.logp_nosv_two_mol
+        outstring += '%f\t' % self.logp_sv_one_mol
+        outstring += '%f\t' % self.logp_sv_two_mol
+        outstring += '%f\t' % self.dbo_score1
+        outstring += '%f\t' % self.dbo_score2
+        outstring += '%f\t' % self.type_score
+        outstring += '%f\t' % self.endtype1_logp
+        outstring += '%f\t' % self.endtype2_logp
+        outstring += '%f\t' % self.start1_logp
+        outstring += '%f\t' % self.end1_logp
+        outstring += '%f\t' % self.start2_logp
+        outstring += '%f\t' % self.end2_logp
+        outstring += '%s\t' % self.support_frm_ids1
+        outstring += '%s\t' % self.support_frm_ids2
+        outstring += '%s\t' % self.support_barcodes
+        outstring += '%d\t' % self.tid1
+        outstring += '%d\t' % self.tid2
+        outstring += '%d' % self.n_readpair_support
 
         return outstring
 
     def output_core(self):
 
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\t%f\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.svlength, self.num_fragment_support, self.n_readpair_support, self.endtype1, self.endtype2, self.score, self.support_barcodes)
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2)
+        outstring += '%s\t%s\t' % (self.svtype, self.svlength) 
+        outstring += '%d\t%d\t' % (self.num_fragment_support, self.n_readpair_support)
+        outstring += '%s\t%s\t' % (self.endtype1, self.endtype2)
+        outstring += '%f\t%f\t%f\t%s' % (self.score, self.dbo_score1, self.dbo_score2, self.support_barcodes)
+
         return outstring
+
 
     def frm_id_list1(self):
         frm_id_list1 = self.support_frm_ids1.strip(',').split(',')
@@ -238,22 +276,36 @@ def read_BedpeBkPair_file(in_file, chrname2tid):
 ##### BedpeBkPair #####
 
 class BedpeSVCall(Bedpe):
-    def __init__(self, chrm1, start1, end1, chrm2, start2, end2, svtype, chrname2tid, info = None):
+    def __init__(self, chrm1, start1, end1, chrm2, start2, end2, svtype, sv_id, chrname2tid, info = None):
         Bedpe.__init__(self, chrm1, start1, end1, chrm2, start2, end2)
 
         if svtype:
             self.svtype = svtype
         else:
             self.svtype = 'UNK'
+
+        if sv_id:
+            self.sv_id = sv_id
+        else:
+            self.sv_id = '.'
         
-        self.info = info
         self.tid1 = chrname2tid[chrm1]
         self.tid2 = chrname2tid[chrm2]
         self.key1 = self.tid1 * FIX_LENGTH + self.mean1
         self.key2 = self.tid2 * FIX_LENGTH + self.mean2
+        self.info = info
+
+    def format(self):
+
+        if self.key1 > self.key2:
+            tmp1, tmp2, tmp3, tmp4, tmp5 = self.chrm1, self.start1, self.end1, self.tid1, self.key1
+            self.chrm1, self.start1, self.end1, self.tid1, self.key1 = self.chrm2, self.start2, self.end2, self.tid2, self.key2
+            self.chrm2, self.start2, self.end2, self.tid2, self.key2 = tmp1, tmp2, tmp3, tmp4, tmp5
+
+        return self 
 
     def output_svcall(self):
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype)
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s' % (self.chrm1, self.start1, self.end1, self.chrm2, self.start2, self.end2, self.svtype, self.sv_id)
         return outstring
     
     def output_bkpos(self):
@@ -290,27 +342,14 @@ def read_svcall_bedpe_file(in_bedpe_file, chrname2tid):
 
     bedpe_list = list()
     for line in lines:
-        if line[0] == '#':
-            continue
+        if line[0] == '#': continue
         line = line.strip().split(tab)
-        if len(line) >= 7:
-            bedpe = BedpeSVCall(line[0], line[1], line[2], line[3], line[4], line[5], line[6], chrname2tid)
-        else:
-            bedpe = BedpeSVCall(line[0], line[1], line[2], line[3], line[4], line[5], 'UNK', chrname2tid)
+        sv_type = 'UNK'
+        sv_id = '.'
+        if len(line) >= 7: sv_type = line[6]
+        if len(line) >= 8: sv_id = line[7]
+        bedpe = BedpeSVCall(line[0], line[1], line[2], line[3], line[4], line[5], sv_type, sv_id, chrname2tid)
         bedpe_list.append(bedpe)
 
     return bedpe_list
 
-def format_svcall_bedpe(bedpe_list):
-
-    formatted_bedpe_list = list()
-
-    for bedpe in bedpe_list:
-        if bedpe.key1 > bedpe.key2:
-            tmp1, tmp2, tmp3, tmp4, tmp5 = bedpe.chrm1, bedpe.start1, bedpe.end1, bedpe.tid1, bedpe.key1
-            bedpe.chrm1, bedpe.start1, bedpe.end1, bedpe.tid1, bedpe.key1 = bedpe.chrm2, bedpe.start2, bedpe.end2, bedpe.tid2, bedpe.key2
-            bedpe.chrm2, bedpe.start2, bedpe.end2, bedpe.tid2, bedpe.key2 = tmp1, tmp2, tmp3, tmp4, tmp5
-
-        formatted_bedpe_list.append(bedpe)
-
-    return formatted_bedpe_list
