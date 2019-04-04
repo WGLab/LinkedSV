@@ -133,8 +133,9 @@ The BEDPE format was defined by BEDtools (https://bedtools.readthedocs.io/en/lat
 
 The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the following tab-delimited columns:
 
+
 |Column|Description|
-:----:|:-----------------------------------------|
+|:----|:-----------------------------------------|
 |chrom1|chrom of breakpoint 1|
 |start1|start position of breakpoint 1|
 |stop1|end position of breakpoint 1|
@@ -166,7 +167,34 @@ prefix.read_depth.txt
 
 These files contains the data that can be used to visualize the SV evidence. 
 
+LinkedSV will also generate a `images` directory in the output directory. The figures showing the evidence of the SV are under this directory. 
+
 ## <a name="Visualization"></a> Visualization of SV calls
+
+After SV calling, LinkedSV will plot the figures showing the evidence of the SV, so that you can see them intuitively. 
+
+Currently, LinkedSV will plot 3 types of evidence:
+1) read depth (for all SV calls)
+2) evidence of decrease of overlapping barcodes between adjcent twin windows (for balanced SV calls)
+3) 2D heatmap of overlapping barcodes (for all SV calls)
+
+These figures are generated in the `images` directory under the output directory. The structure of the `images` directory is:
+
+
+```
+linkedsv_out_dir
+|-- images
+    |-- read_depth
+        |-- prefix.ID01.read_depth.png
+        |-- prefix.ID02.read_depth.png
+    |-- twin_window_barcode_similarity
+        |-- prefix.ID01.breakpoint1.twin_window_barcode_similarity.png
+        |-- prefix.ID01.breakpoint2.twin_window_barcode_similarity.png
+        |-- prefix.ID02.both_breakpoints.twin_window_barcode_similarity.png 
+    |-- 2D_heatmap
+        |-- prefix.ID01.heatmap.png
+        |-- prefix.ID01.heatmap.png
+```
 
 
 
