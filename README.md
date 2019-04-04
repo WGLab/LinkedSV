@@ -10,7 +10,11 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
   - [General usage](#General_usage)
   - [Use cases](#Use_cases)
 - [Output Files](#Output)
+  - [SV call file](#SV_call_file)
+  - [Intermediate files](#Intermediate_files)
+- [Visualization of SV calls](#Visualization)  
 - [Citation](#Output)
+- [Getting Help](#Getting_Help)
 
 ## <a name="Installation"></a>Installation
 
@@ -170,6 +174,6 @@ These files contains the data that can be used to visualize the SV evidence.
 If you use LinkedSV in your work, please cite:
 > Li Fang, Charlly Kao, Michael V Gonzalez, Fernanda A Mafra, Renata Pellegrino da Silva, Mingyao Li, Soren Wenzel, Katharina Wimmer, Hakon Hakonarson, Kai Wang. LinkedSV: Detection of mosaic structural variants from linked-read exome and genome sequencing data. bioRxiv 409789; doi: https://doi.org/10.1101/409789
 
-## <a name="Getting Help"></a> Getting Help
+## <a name="Getting_Help"></a> Getting Help
 
 Please use the [GitHub's Issues page](https://github.com/WGLab/LinkedSV/issues) if you have questions.
