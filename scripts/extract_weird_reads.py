@@ -245,7 +245,7 @@ def extract_weird_reads(args, dbo_args, endpoint_args):
     task = 'extracting read info'
     n_compress_threads = args.n_thread - 1
     if n_compress_threads < 1: n_compress_threads = 1
-    cmd = "%s view %s | cut -f 1-6 | pigz --fast --processes %d  > %s " % (args.samtools, args.sortn_bam, n_compress_threads, args.sortn_bam_core_file)
+    cmd = "%s view %s | cut -f 1-6 | %s --fast --processes %d  > %s " % (args.samtools, args.sortn_bam, args.pigz, n_compress_threads, args.sortn_bam_core_file)
     if args.run_from_begining == False and check_file_exists(args.sortn_bam_core_file):
         myprint('File: %s existed, skipped %s' % (args.sortn_bam_core_file, task))
     else:

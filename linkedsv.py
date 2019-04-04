@@ -228,7 +228,7 @@ def extract_barcode_from_bam (args, endpoint_args):
     ## extract barcode info ##
     n_compress_threads = args.n_thread - 1
     if n_compress_threads < 1: n_compress_threads = 1
-    cmd = '%s %s __STDOUT__ %s | pigz --fast --processes %d - > %s' % (args.extract_barcode, args.sortbx_bam, args.stat_file, n_compress_threads, endpoint_args.bcd21_file)
+    cmd = '%s %s __STDOUT__ %s | %s --fast --processes %d - > %s' % (args.extract_barcode, args.sortbx_bam, args.stat_file, args.pigz, n_compress_threads, endpoint_args.bcd21_file)
 
     if args.run_from_begining == False and my_utils.check_file_exists(args.stat_file) and my_utils.check_file_exists(endpoint_args.bcd21_file):
         my_utils.myprint('File: %s existed, skipped extracting barcode from bam' % endpoint_args.bcd21_file)

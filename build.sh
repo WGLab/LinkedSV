@@ -1,5 +1,16 @@
 #!/bin/bash
 mkdir -p bin/
+
+wget https://github.com/madler/pigz/archive/v2.4.tar.gz
+mv v2.4.tar.gz  pigz-v2.4.tar.gz
+tar xzf pigz-v2.4.tar.gz
+cd pigz-2.4
+make
+mv pigz ../bin/
+cd ../
+rm pigz-v2.4.tar.gz
+rm -r pigz-2.4
+
 cd src
 
 mkdir -p lib/
@@ -20,3 +31,4 @@ gcc -g -O0 -std=c99 -I ./include -L ./lib/ -o cal_centroid_from_read_depth cal_c
 gcc -g -O0 -std=c99 -I ./include -L ./lib/ -o cal_2d_overlapping_barcodes cal_2d_overlapping_barcodes.c tk.c  -l hts -l z -l m -l pthread
 
 mv extract_barcode_info output_bam_coreinfo remove_sparse_nodes grid_overlap cal_read_depth_from_bcd21 cal_barcode_depth_from_bcd21 cal_twin_win_bcd_cnt cal_centroid_from_read_depth cal_2d_overlapping_barcodes ../bin/
+

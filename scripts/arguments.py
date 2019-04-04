@@ -27,7 +27,6 @@ class global_parameter:
 
         self.samtools = parser_args.samtools
         self.bedtools = parser_args.bedtools
-
         self.is_wgs             = parser_args.is_wgs
         self.target_region_bed  = parser_args.target_region
         if parser_args.save_temp_files == True:
@@ -69,6 +68,7 @@ class global_parameter:
         self.split_weird_reads_program = os.path.join(self.root_dir, 'scripts/split_weird_reads_file.py')
         self.cal_expected_overlap_value = os.path.join(self.root_dir, 'scripts/cal_expected_overlap_value.py')
         self.cal_2d_overlapping_barcodes = os.path.join(self.root_dir, 'bin/cal_2d_overlapping_barcodes')
+        self.pigz = os.path.join(self.root_dir, 'bin/pigz')
 
         self.alt_ctg_file  = os.path.join(self.root_dir, 'black_lists/alternative_contigs.txt')
 
