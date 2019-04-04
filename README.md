@@ -10,7 +10,7 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
   - [General usage](#General_usage)
   - [Use cases](#Use_cases)
 - [Output Files](#Output)
-
+- [Citation](#Output)
 
 ## <a name="Installation"></a>Installation
 
@@ -84,7 +84,7 @@ This command will generate a `ref.fasta.fai` file in the same directory of the `
 
 `gap_region_bed` is the bed file of gap regions in the reference genome. It is used to filter the SV calls. LinkedSV provides `gap_region_bed` for human reference genomes (versions: hg19, b37, hg38), so you don't need to provide it if you use hg19, b37, or hg38. 
 
-`ref_version` is used to tell LinkedSV which `black_region_bed` file and `gap_region_bed` file should be used. Currently we have generated blacklists for hg19 (style: "chr1"), b37 (style: "1") and hg38 (style: "chr1"). It is **highly recommended** to spcifiy `ref_version` if you are using these three versions. 
+`ref_version` is used to tell LinkedSV which `black_region_bed` file and `gap_region_bed` file should be used. Currently we have generated blacklists for hg19 (style: "chr1"), b37 (style: "1") and hg38 (style: "chr1"). It is **highly recommended** to spcifiy `ref_version` if you are using these three versions. The valid values are: hg19, b37, hg38. 
 
 If you are using a different reference file, please generate the `black_region_bed` file and the `gap_region_bed` file by yourself and specify the `--gap_region_bed` and `--black_region_bed` parameters.
 
@@ -93,15 +93,16 @@ If you don't have samtools and bedtools in your path, please specify the path us
 
 ### <a name="Use_cases"></a> Use cases: 
 
-**1. Detection of germline SVs from whole-genome sequencing**
+**Detection of germline SVs from whole-genome sequencing**
 
 ```
-python linkedsv.py -i input.phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4 --germline_mode
+python linkedsv.py -i input.phased_possorted_bam.bam -d path/to/output_dir/ -r hg38.fa -v hg38 -t 4 --germline_mode
 ```
+The `-v hg38` parameter specify that the reference genome is hg38. If you use another version, please change accordingly. 
 We recommend using at least 4 threads to speed up the run. Each thread need 4GB memory.
 
 
-**2. Detection of germline SVs from targeted sequencing (e.g. whole-exome sequencing)**
+**Detection of germline SVs from targeted sequencing (e.g. whole-exome sequencing)**
 
 ```
 python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4 --targeted --target_region path/to/target_region.bed --germline_mode
@@ -109,19 +110,22 @@ python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fas
 
 `target_region.bed` is a bed file that contains the target regions (capture regions). 
 
-**3. Detection of somatic SVs from whole-genome sequencing** 
+**Detection of somatic SVs from whole-genome sequencing** 
 
 ```
 python linkedsv.py -i input.phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4 --somatic_mode
 ```
 
 
-
 ## <a name="Output"></a> Output Files
 
-LinkedSV will output two files, `prefix.raw_svcalls.bedpe` and `prefix.filtered_svcalls.bedpe`. In most cases, you only need to look at the `prefix.filtered_svcalls.bedpe`. 
+LinkedSV will output the SV calls, as well as the figures that allow you to visualize the call. 
 
-The BEDPE format was defined by bedtools (https://bedtools.readthedocs.io/en/latest/content/general-usage.html). It can be used to concisely describe disjoint genome features, such as structural variations or paired-end sequence alignments.
+### <a name="SV_call_file"></a> SV call file
+
+LinkedSV will output two SV call files, `prefix.raw_svcalls.bedpe` and `prefix.filtered_svcalls.bedpe`. The `prefix.raw_svcalls.bedpe` file contains a raw, unfiltered, highly sensitive callset in BEDPE format. and may contain many false positives calls. The `prefix.filtered_svcalls.bedpe` file contains the filtered SV calls. In most cases, you only need to look at the `prefix.filtered_svcalls.bedpe`. 
+
+The BEDPE format was defined by BEDtools (https://bedtools.readthedocs.io/en/latest/content/general-usage.html). It can be used to concisely describe disjoint genome features, such as structural variations. We did not use BED format because BED format does not allow inter-chromosomal feature definitions.
 
 The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the following tab-delimited columns:
 
@@ -134,6 +138,7 @@ The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the follo
 |start2|start position of breakpoint 2|
 |stop2|end position of breakpoint 2|
 |sv_type|SV type inferred from breakpoints|
+|sv_id|unique ID of the SV|
 |sv_length|SV length|
 |filter|filter. 'PASS' if the call passed all filtering steps.| 
 |num_supporting_fragments|number of fragment pairs that support the SV|
@@ -142,6 +147,23 @@ The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the follo
 |endpoint2_type|type of enriched fragment endpoint near breakpoint 2|
 |qual_score|quality score of the SV|
 |supporting_barcodes|barcode sequences of the fragments that support the SV|
+
+For the meaning of "endpoint1_type" and "endpoint2_type", please refer to our manuscript ([Citation](#Citation))
+
+### <a name="Intermediate_files"></a> Intermediate files
+
+LinkedSV also output some intermediate files:
+
+```
+prefix.bcd21.gz
+prefix.bcd13
+prefix.read_depth.txt
+```
+
+These files contains the data that can be used to visualize the SV evidence. 
+
+## <a name="Visualization"></a> Visualization of SV calls
+
 
 
 ## <a name="Citation"></a> Citation
