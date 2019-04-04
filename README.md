@@ -10,7 +10,7 @@ Python (version: 2.7)
 
 Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, datetime
 
-pigz (https://github.com/madler/pigz), SAMtools (version >= 1.3, https://github.com/samtools/samtools ) and BEDTools (https://bedtools.readthedocs.io/en/latest/). 
+SAMtools (version >= 1.3, https://github.com/samtools/samtools ) and BEDTools (https://bedtools.readthedocs.io/en/latest/). 
 
 ```
 git clone https://github.com/WGLab/LinkedSV.git 
@@ -23,18 +23,20 @@ sh build.sh
 ```
 usage: linkedsv.py [-h] -i input.phased_possorted_bam.bam -d output_directory
                    -r ref.fa [-v version] [--gap_region_bed BED]
-                   [--black_region_bed BED] [-t num_thread] [-q min_map_qual]
-                   [--min_fragment_length INT] [--min_supp_barcodes INT]
-                   [--samtools path/to/samtools] [--bedtools path/to/bedtools]
-                   [--wgs] [--targeted] [--target_region BED]
-                   [--gap_distance_cut_off INT] [--rm_temp_files INT]
+                   [--black_region_bed BED] [-t num_thread]
+                   [--min_fragment_length INT] [--min_reads_in_fragment INT]
+                   [--min_supp_barcodes INT] [--samtools path/to/samtools]
+                   [--bedtools path/to/bedtools] [--wgs] [--targeted]
+                   [--germline_mode] [--somatic_mode] [--target_region BED]
+                   [--gap_distance_cut_off INT] [--save_temp_files]
+
 ```
 
 ### Examples: 
-1. Detection of SVs from whole-genome sequencing. 
+1. Detection of germline SVs from whole-genome sequencing. 
 
 ```
-python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4
+python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4 --germline_mode
 ```
 
 
@@ -46,13 +48,17 @@ The `ref.fasta` file is the FASTA file of the reference genome. It should be the
 
 We recommend using at least 4 threads to speed up the run. Each thread need 4GB memory.
 
-2. Detection of SVs from targeted sequencing (e.g. whole-exome sequencing) . 
+If you don't have samtools and bedtools in your path, please specify the path using `--samtools` and `--bedtools`. 
+
+2. Detection of germline SVs from targeted sequencing (e.g. whole-exome sequencing) . 
 
 ```
-python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4 --targeted --target_region path/to/target_region.bed
+python linkedsv.py -i phased_possorted_bam.bam -d path/to/output_dir/ -r ref.fasta -v hg38 -t 4 --targeted --target_region path/to/target_region.bed --germline_mode
 ```
 
 `target_region.bed` is a bed file that contains the target regions (capture regions). 
+
+
 
 
 ### Output files of LinkedSV
