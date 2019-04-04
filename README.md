@@ -8,7 +8,7 @@ GCC (version >= 4.4).
 
 Python (version: 2.7)
 
-Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, datetime
+Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime
 
 SAMtools (version >= 1.3, https://github.com/samtools/samtools ) and BEDTools (https://bedtools.readthedocs.io/en/latest/). 
 
