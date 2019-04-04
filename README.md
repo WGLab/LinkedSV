@@ -12,9 +12,15 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
 - [Output Files](#Output)
   - [SV call file](#SV_call_file)
   - [Intermediate files](#Intermediate_files)
-- [Visualization of SV calls](#Visualization)  
+- [Visualization of SV calls](#Visualization)
+  - [Read depth](#read_depth)
+  - [Twin-window evidence](#Twin_window_evidence)
+  - [Heat Map of overlapping barcodes](#Heat_Map)
 - [Citation](#Output)
 - [Getting Help](#Getting_Help)
+
+
+
 
 ## <a name="Installation"></a>Installation
 
@@ -176,10 +182,9 @@ After SV calling, LinkedSV will plot the figures showing the evidence of the SV,
 Currently, LinkedSV will plot 3 types of evidence:
 1) read depth (for all SV calls)
 2) evidence of decrease of overlapping barcodes between adjcent twin windows (for balanced SV calls)
-3) 2D heatmap of overlapping barcodes (for all SV calls)
+3) Heat maps of overlapping barcodes (for all SV calls)
 
 These figures are generated in the `images` directory under the output directory. The structure of the `images` directory is:
-
 
 ```
 linkedsv_out_dir
@@ -187,14 +192,22 @@ linkedsv_out_dir
     |-- read_depth
         |-- prefix.ID01.read_depth.png
         |-- prefix.ID02.read_depth.png
+        
     |-- twin_window_barcode_similarity
         |-- prefix.ID01.breakpoint1.twin_window_barcode_similarity.png
         |-- prefix.ID01.breakpoint2.twin_window_barcode_similarity.png
         |-- prefix.ID02.both_breakpoints.twin_window_barcode_similarity.png 
+        
     |-- 2D_heatmap
         |-- prefix.ID01.heatmap.png
         |-- prefix.ID01.heatmap.png
 ```
+
+### <a name="read_depth"></a> Read depth
+
+### <a name="Twin_window_evidence"></a> Twin-window evidence
+
+### <a name="Heat_Map"></a> Heat map of overlapping barcodes
 
 
 
