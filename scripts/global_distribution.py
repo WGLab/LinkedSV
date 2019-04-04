@@ -8,7 +8,6 @@ import numpy as np
 from fragment import *
 import math
 import subprocess
-from sys import getrefcount
 import cluster_reads
 
 
