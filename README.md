@@ -8,9 +8,9 @@ GCC (version >= 4.4).
 
 Python (version: 2.7)
 
-Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse.
+Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, datetime
 
-SAMtools (version >= 1.3, https://github.com/samtools/samtools ) and BEDTools (https://bedtools.readthedocs.io/en/latest/). 
+pigz (https://github.com/madler/pigz), SAMtools (version >= 1.3, https://github.com/samtools/samtools ) and BEDTools (https://bedtools.readthedocs.io/en/latest/). 
 
 ```
 git clone https://github.com/WGLab/LinkedSV.git 
