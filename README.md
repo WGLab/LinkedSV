@@ -209,18 +209,22 @@ Here are some example figures for different SV types. The figures were plotted f
 
 **Deletion**
 ![DEL](example_plots/DEL/hx1_hg38.ID0097.read_depth.png)
+The region between the two red lines has lower read depth. 
 
 
 
 
 **Duplication**
 ![DUP](example_plots/DUP/hx1_hg38.ID0137.read_depth.png)
+The region between the two red lines has higher read depth. 
 
 
 
 
 **Inversion**
 ![INV](example_plots/INV/hx1_hg38.ID0132.read_depth.png)
+The region between the two red lines has same read depth as the flanking regions. 
+
 
  
 ### <a name="Twin_window_evidence"></a> Twin-window evidence
