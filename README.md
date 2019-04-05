@@ -177,7 +177,7 @@ LinkedSV will also generate a `images` directory in the output directory. The fi
 
 ## <a name="Visualization"></a> Visualization of SV calls
 
-After SV calling, LinkedSV will plot the figures showing the evidence of the SV, so that you can see them intuitively. 
+After SV calling, LinkedSV will plot high-resolution figures showing the evidence of the SV, so that you can see them intuitively. 
 
 Currently, LinkedSV will plot 3 types of evidence:
 1) read depth (for all SV calls)
@@ -205,10 +205,60 @@ linkedsv_out_dir
 
 ### <a name="read_depth"></a> Read depth
 
+Here are some example figures for different SV types. The figures were plotted from the SV calls on the [HX1 genome](http://dx.doi.org/10.1038/ncomms12065). The dotted blue line showed the average depth across the whole genome. The predicted breakpoints were indicated by vertical red lines. The black line showed the depth of confidently mapped reads (map quality >= 20) and the grey line showed the depth of all reads (map quality >= 0). The black line is in front of the grey line. So if you do not see the grey lines, then the black and grey lines are in the same place (i.e. the region is of high map quality). 
+
+**Deletion**
+![DEL](example_plots/DEL/hx1_hg38.ID0097.read_depth.png)
+
+
+
+
+**Duplication**
+![DUP](example_plots/DUP/hx1_hg38.ID0137.read_depth.png)
+
+
+
+
+**Inversion**
+![INV](example_plots/INV/hx1_hg38.ID0132.read_depth.png)
+
+ 
 ### <a name="Twin_window_evidence"></a> Twin-window evidence
+
+LinkedSV plots the twin-window evidence for balanced SV events, such as inversions and balanced translocations. The barcodes between two nearby genome locations is highly similar because the two locations are spanned by almost the same set of input HMW DNA molecules. However, due to the genome rearrangement, the reads mapped to the left side and right side of a breakpoint may originate from different locations of the alternative genome and thus have different barcodes. 
+
+Dropped barcode similarity between two nearby loci therefore indicates a SV breakpoint. LinkedSV detects this type of evidence by a twin-window method, which uses two adjacent sliding windows to scan the genome and find regions where the barcode similarity between the two nearby window regions are significantly decreased. (Please refer to our manuscript for the detailed explaination: [Citation](#Citation) )
+
+Here is an example figure of the twin-window evidence. It was plotted from an inversion call on the HX1 genome. X-axis is the position of the middle of the twin windows. Y-axis is the -log10(P-value), where P-value means the probabity that the overlapping barcodes between the twin windows is less than or equal to the observed number assuming no SV. 
+
+In the following figure, the red line showed the predicted breakpoint. The P-value is very small at the breakpoints, so -log10(P-value) is very high. 
+
+**Inversion**
+![INV](example_plots/INV/hx1_hg38.ID0132.both_breakpoints.twin_window_barcode_similarity.png)
+
+
 
 ### <a name="Heat_Map"></a> Heat map of overlapping barcodes
 
+
+LinkedSV also plots the 2D heat maps of overlapping barcodes. This figure is similar to the figure showed by [Loupe](https://support.10xgenomics.com/genome-exome/software/visualization/latest/what-is-loupe), which was developped by 10X Genomics.
+
+Some example figures are here. 
+
+**Deletion**
+![DEL](example_plots/DEL/hx1_hg38.ID0097.heatmap.png)
+
+
+
+
+**Duplication**
+![DUP](example_plots/DUP/hx1_hg38.ID0231.heatmap.png)
+![DUP](example_plots/DUP/hx1_hg38.ID0137.heatmap.png)
+
+
+
+**Inversion**
+![INV](example_plots/INV/hx1_hg38.ID0132.heatmap.png)
 
 
 ## <a name="Citation"></a> Citation
