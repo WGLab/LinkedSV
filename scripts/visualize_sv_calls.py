@@ -226,7 +226,7 @@ def plot_twin_window_barcode_similarity_for1region(chrom, tid, reg_start, reg_en
     plt.figure(figsize=(10, 5))
     plt.title(figure_title)
     plt.xlabel('%s position' % chrom)
-    plt.ylabel('P-value')
+    plt.ylabel('-log10(P-value)')
     plt.plot(x_list, y_list, '-', color = 'black')
     plt.axis([xmin, xmax, 0, ymax])
     plt.axvline(x=bk_pos1, color='r', linestyle = '--')
