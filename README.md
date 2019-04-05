@@ -243,6 +243,8 @@ In the following figure, the red line showed the predicted breakpoint. The P-val
 
 LinkedSV also plots the 2D heat maps of overlapping barcodes. This figure is similar to the figure showed by [Loupe](https://support.10xgenomics.com/genome-exome/software/visualization/latest/what-is-loupe), which was developped by 10X Genomics.
 
+The resolution is 1000 bp. The color of each dot indicates the number of overlapping barcodes between two genomics positions (X and Y coordinates of the dot). 
+
 Some example figures are here. 
 
 **Deletion**
