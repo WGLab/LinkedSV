@@ -16,6 +16,7 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
   - [Read depth](#read_depth)
   - [Twin-window evidence](#Twin_window_evidence)
   - [Heat Map of overlapping barcodes](#Heat_Map)
+- [Future extensions](#Future_extensions)
 - [Citation](#Output)
 - [Getting Help](#Getting_Help)
 
@@ -273,6 +274,11 @@ Some example figures are here.
 ![INV](example_plots/INV/hx1_hg38.ID0132.heatmap.png)
 
 
+## <a name="Future_extensions"></a> Future extensions 
+Recently, [BGI](https://www.bgi.com/us/) and [Complete Genomics](https://www.completegenomics.com/) developped **single tube long fragment read (stLFR)** ([Genome Res. 2019](https://genome.cshlp.org/content/early/2019/04/02/gr.245126.118.abstract)), a technology that enables sequence data from long DNA molecules using second-generation sequencing technology. It is based on adding the same barcode sequence to sub-fragments of the original long DNA molecule (DNA co-barcoding). Since this technology is also a barcoded sequencing of long fragments, LinkedSV is planned to support stLFR in the near future. 
+
+
+ 
 
 ## <a name="Citation"></a> Citation
 If you use LinkedSV in your work, please cite:
