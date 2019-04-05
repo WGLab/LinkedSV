@@ -38,7 +38,7 @@ class global_parameter:
 
         self.temp_file_list = list()
 
-        self.run_from_begining = False 
+        self.run_from_begining = True
         self.only_method1      = False
         self.only_method2      = True
 
