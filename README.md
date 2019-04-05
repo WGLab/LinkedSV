@@ -203,6 +203,7 @@ linkedsv_out_dir
         |-- prefix.ID01.heatmap.png
 ```
 
+
 ### <a name="read_depth"></a> Read depth
 
 Here are some example figures for different SV types. The figures were plotted from the SV calls on the [HX1 genome](http://dx.doi.org/10.1038/ncomms12065). The dotted blue line showed the average depth across the whole genome. The predicted breakpoints were indicated by vertical red lines. The black line showed the depth of confidently mapped reads (map quality >= 20) and the grey line showed the depth of all reads (map quality >= 0). The black line is in front of the grey line. So if you do not see the grey lines, then the black and grey lines are in the same place (i.e. the region is of high map quality). 
@@ -235,10 +236,14 @@ Dropped barcode similarity between two nearby loci therefore indicates a SV brea
 
 Here is an example figure of the twin-window evidence. It was plotted from an inversion call on the HX1 genome. X-axis is the position of the middle of the twin windows. Y-axis is the -log10(P-value), where P-value means the probabity that the overlapping barcodes between the twin windows is less than or equal to the observed number assuming no SV. 
 
-In the following figure, the red line showed the predicted breakpoint. The P-value is very small at the breakpoints, so -log10(P-value) is very high. 
+In the following figure, the red line showed the predicted breakpoint. Since the P-value is very small at the breakpoints, Y values (-log10(P-value)) are very high and form two peaks at the breakpoints. 
+
 
 **Inversion**
 ![INV](example_plots/INV/hx1_hg38.ID0132.both_breakpoints.twin_window_barcode_similarity.png)
+
+
+
 
 
 
@@ -263,8 +268,10 @@ Some example figures are here.
 
 
 
+
 **Inversion**
 ![INV](example_plots/INV/hx1_hg38.ID0132.heatmap.png)
+
 
 
 ## <a name="Citation"></a> Citation
