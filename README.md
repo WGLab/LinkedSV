@@ -40,18 +40,7 @@ The following software tools and packages are required for the installation of L
 You can use `pip` to install a python package. You can use the following commands to install these python packages. 
 
 ```
-pip install --user sklearn
-pip install --user scipy
-pip install --user numpy
-pip install --user gzip
-pip install --user psutil
-pip install --user subprocess
-pip install --user bisect
-pip install --user math
-pip install --user argparse
-pip install --user pandas
-pip install --user seaborn
-pip install --user datetime
+pip install --user sklearn scipy numpy gzip psutil subprocess bisect math argparse pandas seaborn datetime
 ```
 
 The `--user` tells pip to install the seaborn in your own directory, so that you don't need root access. 
