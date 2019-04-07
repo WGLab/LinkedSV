@@ -37,7 +37,7 @@ The following software tools and packages are required for the installation of L
 
 3. Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime
 
-You can use `pip` to install a python package. You can use the following commands to install these python packages. 
+You can use `pip` to install a python package. You can use the following command to install these python packages. 
 
 ```
 pip install --user sklearn scipy numpy gzip psutil subprocess bisect math argparse pandas seaborn datetime
