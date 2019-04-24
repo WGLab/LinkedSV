@@ -19,6 +19,7 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
 - [Future extensions](#Future_extensions)
 - [Citation](#Output)
 - [Getting Help](#Getting_Help)
+- [License Agreement](#License)
 
 
 
@@ -289,7 +290,7 @@ Please use the [GitHub's Issues page](https://github.com/WGLab/LinkedSV/issues) 
 
 By using the software, you acknowledge that you agree to the terms below:
 
-For academic and non-profit use, you are free to fork, download, modify, distribute and use the software without restriction.
+For academic and non-profit use, you are free to fork, download, modify, distribute and use the software without restrictions.
 
 For commercial use, you are required to contact the authors at Children's Hospital of Philadelphia to discuss licensing options.
 
