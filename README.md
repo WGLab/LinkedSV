@@ -277,9 +277,6 @@ Some example figures are here.
 ## <a name="Future_extensions"></a> Future extensions 
 Recently, [BGI](https://www.bgi.com/us/) and [Complete Genomics](https://www.completegenomics.com/) developped **single tube long fragment read (stLFR)** ([Genome Res. 2019](https://genome.cshlp.org/content/early/2019/04/02/gr.245126.118.abstract)), a technology that enables sequence data from long DNA molecules using second-generation sequencing technology. It is based on adding the same barcode sequence to sub-fragments of the original long DNA molecule (DNA co-barcoding). Since this technology is also a barcoded sequencing of long fragments, LinkedSV is planned to support stLFR in the near future. 
 
-
- 
-
 ## <a name="Citation"></a> Citation
 If you use LinkedSV in your work, please cite:
 > Li Fang, Charlly Kao, Michael V Gonzalez, Fernanda A Mafra, Renata Pellegrino da Silva, Mingyao Li, Soren Wenzel, Katharina Wimmer, Hakon Hakonarson, Kai Wang. LinkedSV: Detection of mosaic structural variants from linked-read exome and genome sequencing data. bioRxiv 409789; doi: https://doi.org/10.1101/409789
@@ -287,3 +284,13 @@ If you use LinkedSV in your work, please cite:
 ## <a name="Getting_Help"></a> Getting Help
 
 Please use the [GitHub's Issues page](https://github.com/WGLab/LinkedSV/issues) if you have questions.
+
+## <a name="License"></a> License Agreement
+
+By using the software, you acknowledge that you agree to the terms below:
+
+For academic and non-profit use, you are free to fork, download, modify, distribute and use the software without restriction.
+
+For commercial use, you are required to contact the authors at Children's Hospital of Philadelphia to discuss licensing options.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
