@@ -43,6 +43,7 @@ def get_high_coverage_regions(args, dbo_args, endpoint_args):
         if line[0] == '#': continue
         line = line.strip().split(tab)
         frm = Fragment(line)
+        if frm.tid not in frm_cov_dict: continue
         start_bin_idx = int (frm.start/bin_size)
         end_bin_idx = int(frm.end/bin_size)
         for i in range(start_bin_idx, end_bin_idx+1):
