@@ -12,3 +12,5 @@
 tabix
 htsfile
 bgzip
+.vs
+.vscode
