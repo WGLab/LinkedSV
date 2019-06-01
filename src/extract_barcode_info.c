@@ -89,7 +89,7 @@ int extract_barcode_info (const char * inbam, const char * out_file, const char 
 		}
 	}
 
-    sprintf(output_header,"#tid\tstart_pos\tend_pos\tmap_qual\tbarcode\thap_type\tReadID\tflag\tn_left_clip\tn_right_clip\tinsert_size\tmate_tid\tmate_pos\tcigar\n");
+    sprintf(output_header,"#tid\tstart_pos\tend_pos\tmap_qual\tbarcode\thap_type\tReadID\tflag\tn_left_clip\tn_right_clip\tinsert_size\tmate_tid\tmate_pos\tcigar_string\n");
     fprintf(out_fp,"%s", output_header);
 
     while (ret = sam_read1(in, hdr, b) >= 0)
@@ -148,14 +148,13 @@ int extract_barcode_info (const char * inbam, const char * out_file, const char 
 
 		fprintf(out_fp,"%d\t%d\t%d\t%d\t%s\t", c->tid, c->pos, bam_endpos(b), c->qual, barcode);
 		fprintf(out_fp,"%d\t%s\t%d\t", hap_type, b->data, c->flag);
-		fprintf(out_fp,"%d\t%d\t%d\t%d\t%d", n_left_clip, n_right_clip, c->isize, c->mtid, c->mpos);
-		for (int i = 0; i < n_cigar; i++) {
-			cigar = bam_get_cigar(b);
-			opr = bam_cigar_op(cigar[0]);
-			oprlen = bam_cigar_oplen(cigar[0]);
-			fprintf(out_fp, "%d%c", oprlen, BAM_CIGAR_STR[opr]);
-		}
-		fprintf(out_fp, "\n");
+		fprintf(out_fp,"%d\t%d\t%d\t%d\t%d\t", n_left_clip, n_right_clip, c->isize, c->mtid, c->mpos);
+
+        for (int i = 0; i < b->core.n_cigar; i++) {
+            cigar = bam_get_cigar(b);
+            fprintf(out_fp, "%d%c", bam_cigar_oplen(cigar[i]), bam_cigar_opchr(cigar[i]));
+        }   
+        fprintf(out_fp, "\n");
 		output_rd_cnt++;
 	}
 
