@@ -11,7 +11,6 @@ import gzip
 
 from scripts import my_utils 
 from scripts import extract_weird_reads
-from scripts import cluster_reads 
 from scripts import get_high_coverage_regions 
 from scripts import global_distribution 
 from scripts import find_paired_bk 
@@ -19,7 +18,7 @@ from scripts import quantify2bkcand
 from scripts import merge_quantified_calls 
 from scripts import filter_calls
 from scripts import arguments
-from scripts import visualize_sv_calls
+#from scripts import visualize_sv_calls
 
 
 tab = '\t'
@@ -37,8 +36,6 @@ def main():
     args.global_distribution_calculated = False
 
     extract_barcode_from_bam(args, endpoint_args)
-
-    extract_weird_reads.extract_weird_reads(args, dbo_args, endpoint_args)
 
     detect_increased_fragment_ends(args, dbo_args, endpoint_args)
 
@@ -72,7 +69,7 @@ def main():
     image_out_dir = os.path.join(args.out_dir, 'images')
     my_utils.make_dir(image_out_dir)
 
-    visualize_sv_calls.visualize_sv_calls (args.filter_bedpe_file, dbo_args.bcd13_file, endpoint_args.bcd21_file, args.faidx_file, args.cal_2d_overlapping_barcodes, args.cal_read_depth_from_bcd21, image_out_dir, args.bam_name)
+    #visualize_sv_calls.visualize_sv_calls (args.filter_bedpe_file, dbo_args.bcd13_file, endpoint_args.bcd21_file, args.faidx_file, args.cal_2d_overlapping_barcodes, args.cal_read_depth_from_bcd21, image_out_dir, args.bam_name)
 
     ## remove temp files ##
     if args.rm_temp_files: 
@@ -171,11 +168,19 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
     ### clustering reads | output file: bcd22 file
     task = 'clustering reads'
 
+    if args.is_wgs: 
+        is_wgs = 1
+    else:
+        is_wgs = 0
+
     if args.run_from_begining == False and my_utils.check_file_exists (endpoint_args.bcd22_file):
         my_utils.myprint('bcd22 file existed, skipped %s' % (task))
     else:
         my_utils.myprint(task)
-        cluster_reads.cluster_reads(args, dbo_args, endpoint_args) 
+    
+        cmd = '%s %s %s %s %d %d %d' % (args.cluster_reads, endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.weird_reads_file, is_wgs, args.user_defined_min_reads_in_fragment, args.min_mapq)
+        my_utils.myprint(cmd)
+        os.system(cmd)
     
     gc.collect()
 
@@ -216,7 +221,7 @@ def extract_barcode_from_bam (args, endpoint_args):
     
     ## sort bam by barcode ##
 
-    cmd = '%s %s | %s sort -m 2G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
+    cmd = '%s %s | %s sort -l 1 -m 2G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
 
     if my_utils.check_file_exists(args.sortbx_bam):
         my_utils.myprint('File: %s existed, skipped sorting bam by barcode' % args.sortbx_bam)

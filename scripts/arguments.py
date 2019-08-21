@@ -50,7 +50,7 @@ class global_parameter:
         self.sortbx_bam = self.out_prefix + '.sortbx.bam' 
 
         self.sortn_bam_core_file = self.out_prefix + '.sortn.bam.coreinfo.gz' 
-        self.weird_reads_file  = self.out_prefix + '.weird_reads' 
+        self.weird_reads_file  = self.out_prefix + '.weird_reads.txt' 
         
         self.alt_chr_name_set = set()
         self.alt_tid_set = set()
@@ -69,6 +69,7 @@ class global_parameter:
         self.cal_expected_overlap_value = os.path.join(self.root_dir, 'scripts/cal_expected_overlap_value.py')
         self.cal_2d_overlapping_barcodes = os.path.join(self.root_dir, 'bin/cal_2d_overlapping_barcodes')
         self.pigz = os.path.join(self.root_dir, 'bin/pigz')
+        self.cluster_reads = os.path.join(self.root_dir, 'bin/cluster_reads')
 
         self.alt_ctg_file  = os.path.join(self.root_dir, 'black_lists/alternative_contigs.txt')
 
@@ -109,6 +110,7 @@ class global_parameter:
         self.filter_bedpe_file = self.out_prefix + '.filtered_svcalls.bedpe'
 
         self.read_depth_file = self.out_prefix + '.read_depth.txt'
+        self.hap_type_read_depth_file = self.out_prefix + '.hap_depth.txt'
         self.chrname2tid = None
         self.tid2chrname = None
         self.global_distribution_calculated = False
