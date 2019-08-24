@@ -1,12 +1,20 @@
 #!/bin/bash
 mkdir -p bin/
 
+## pigz ##
 cd pigz
 make
 mv pigz ../bin/
 mv unpigz ../bin/
 cd ../
 
+## fermikit ##
+cd fermikit
+make
+cd ..
+
+
+## cpp ##
 cd src
 
 mkdir -p lib/
@@ -34,5 +42,5 @@ g++ -g -O0 -std=c++11 -I ./include/ -L ./lib/ -o call_small_deletions call_small
 
 mv cluster_reads extract_barcode_info output_bam_coreinfo remove_sparse_nodes ../bin/
 mv cal_hap_read_depth_from_bcd21 grid_overlap cal_read_depth_from_bcd21 cal_barcode_depth_from_bcd21 ../bin/
-mv cal_twin_win_bcd_cnt cal_centroid_from_read_depth cal_2d_overlapping_barcodes ../bin/
+mv cal_twin_win_bcd_cnt cal_centroid_from_read_depth cal_2d_overlapping_barcodes call_small_deletions ../bin/
 
