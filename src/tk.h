@@ -176,4 +176,8 @@ cgranges_t *generate_cr_interval_tree(const std::vector <Interval> & db_interval
 int search_overlap_from_cr_interval_tree(cgranges_t * cr, const Interval & input_itv, std::vector <size_t> & output_index_vector);
 
 
+/* FILE IO */
+
+int remove_file(const char * file_name);
+
 #endif 

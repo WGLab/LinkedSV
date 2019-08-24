@@ -11,8 +11,10 @@
 #include <thread>
 #include <algorithm>
 #include <limits>
+#include <chrono> 
 
 #include <zlib.h>
+
 
 #include "cluster_reads.h"
 #include "tk.h"
@@ -154,7 +156,7 @@ int64_t abs_int64_t(int64_t a)
 
 
 
-Bcd22 convert_bcd21vector_to_bcd22 (Settings & global_settings, const std::vector <Bcd21> & fragment_bcd21_vector)
+Bcd22 convert_bcd21vector_to_bcd22 (const Settings & global_settings, const std::vector <Bcd21> & fragment_bcd21_vector)
 {
     // fragment_bcd21_vector should be sorted by map position. 
     Bcd22 frm;
@@ -229,11 +231,6 @@ Bcd22 convert_bcd21vector_to_bcd22 (Settings & global_settings, const std::vecto
         frm.other_weird_reads_output = ".";
     }
   
-    if (frag_id % 1000000 == 0)
-    {
-        fprintf(stderr, "grouped %d fragments\n", frag_id);
-    }
-
     return frm; 
 
 }
@@ -311,7 +308,7 @@ int calculate_inner_size_and_gap_distance(std::vector <Bcd21> & fragment_bcd21_v
     return 0;
 }
 
-int first_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_bcd21_file, std::string out_bcd22_file, int length_cut, std::vector <int> & inner_size_count_vector, std::vector <int> & gap_distance_count_vector) 
+int first_round_bcd21_to_bcd22_file (int thread_id, const Settings & global_settings, const std::string in_bcd21_file, const std::string out_bcd22_file, const int length_cut, std::vector <int> & inner_size_count_vector, std::vector <int> & gap_distance_count_vector) 
 {
 
     int min_num_good_reads;
@@ -319,17 +316,9 @@ int first_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_
     FILE * out_bcd22_fp;
     std::string bcd22_header;
     
-    if (global_settings.is_wgs) {
-        min_num_good_reads = 6;
-    } else {
-        min_num_good_reads = 3;
-    }
 
-    if (global_settings.user_defined_min_num_good_reads_per_fragment > 0){
-        min_num_good_reads = global_settings.user_defined_min_num_good_reads_per_fragment;
-    }
+    min_num_good_reads = global_settings.min_num_good_reads_per_fragment;
 
-    global_settings.min_num_good_reads_per_fragment = min_num_good_reads;
 
     in_bcd21_fp = gzopen(in_bcd21_file.c_str(), "r");
 	if (Z_NULL == in_bcd21_fp) {
@@ -351,12 +340,13 @@ int first_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_
    
     char * line = new char[line_max];;
     char * new_bcd = new char[1024]; 
+    char * prev_bcd = new char[1024]; 
     char * new_read_id = new char[1024];
     char * cigar_string = new char [4096];
     std::vector <Bcd21> fragment_bcd21_vector;
 
-    std::string curr_bcd = "";
-    int bcd_cnt = 0;
+    
+    int bcd_id = -1;
     int curr_tid = -1;
     frag_id = 0;
 
@@ -366,8 +356,20 @@ int first_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_
     while (gzgets(in_bcd21_fp, line, line_max))
     {
         if (line[0] == '#') { continue; }
+        sscanf(line, "%*d\t%*d\t%*d\t%*d\t%s\t%*s\n", new_bcd);
+        if (strcmp(prev_bcd, new_bcd) != 0)
+        {
+            bcd_id ++;
+            strcpy(prev_bcd, new_bcd);
+        }
+        if (bcd_id % global_settings.n_threads != thread_id )
+        {
+            continue;
+        }
+
         Bcd21 new_bcd21; 
 		convert1line2bcd21(line, new_bcd21, new_bcd, new_read_id, cigar_string);
+        
         if (new_bcd21.flag & (4 + 256 + 1024 + 2048)){ continue; }
 
         if (fragment_bcd21_vector.size() == 0 || (new_bcd21.bcd == fragment_bcd21_vector.back().bcd and new_bcd21.key_start() - fragment_bcd21_vector.back().key_end() < length_cut) ) {
@@ -384,6 +386,7 @@ int first_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_
             fragment_bcd21_vector.clear();
             fragment_bcd21_vector.push_back(new_bcd21);
         }
+
     }
  
     if (fragment_bcd21_vector.size()> 0)
@@ -400,6 +403,7 @@ int first_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_
 
     delete [] line;
     delete [] new_bcd;
+    delete [] prev_bcd;
     delete [] new_read_id;
     delete [] cigar_string;
     gzclose(in_bcd21_fp);
@@ -410,14 +414,31 @@ int first_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_
 
 
 
-int estimate_distribution(Settings & global_settings, std::vector<int> & inner_size_count_vector, std::vector<int> &gap_distance_count_vector)
+int estimate_distribution(Settings & global_settings, std::vector <std::vector <int>>  & inner_size_count_2d_vector, std::vector <std::vector <int>>  &gap_distance_count_2d_vector)
 {
 
     QuantileNumbers inner_size_quantiles; 
     QuantileNumbers gap_distance_quantiles;
 
-    calculate_distribution_from_count_vector(inner_size_count_vector, inner_size_quantiles);
-    calculate_distribution_from_count_vector(gap_distance_count_vector, gap_distance_quantiles);
+    for (int thread_id = 1; thread_id < inner_size_count_2d_vector.size(); thread_id++ )
+    {
+        for (int j = 0; j < inner_size_count_2d_vector[thread_id].size(); j++)
+        {
+            inner_size_count_2d_vector[0][j] += inner_size_count_2d_vector[thread_id][j];
+        }
+    }
+
+    for (int thread_id = 1; thread_id < gap_distance_count_2d_vector.size(); thread_id++ )
+    {
+        for (int j = 0; j < gap_distance_count_2d_vector[thread_id].size(); j++)
+        {
+            gap_distance_count_2d_vector[0][j] += gap_distance_count_2d_vector[thread_id][j];
+        }
+    }
+
+
+    calculate_distribution_from_count_vector(inner_size_count_2d_vector[0], inner_size_quantiles);
+    calculate_distribution_from_count_vector(gap_distance_count_2d_vector[0], gap_distance_quantiles);
 
     double median, rstd; 
     median = inner_size_quantiles.q[500]; 
@@ -470,7 +491,7 @@ int find_weird_reads_from_bcd21_vector(Settings & global_settings, std::vector <
     return 0;
 }
 
-int process_all_bcd21_of_one_barcode(Settings & global_settings, std::vector <Bcd21> & onebarcode_bcd21_vector, std::vector <Bcd22> & output_frm_vector, FILE * weird_read_fp)
+int process_all_bcd21_of_one_barcode(int thread_id, Settings & global_settings, std::vector <Bcd21> & onebarcode_bcd21_vector, std::vector <Bcd22> & output_frm_vector, FILE * weird_read_fp)
 {
     // find all weird reads
     // group fragments (only split read pairs that support deletion )
@@ -523,11 +544,11 @@ int process_all_bcd21_of_one_barcode(Settings & global_settings, std::vector <Bc
     {
         if ( ! (onebarcode_bcd21_vector[i].flag & (4 + 256 + 512 + 1024 + 2048)) )
         {
-            global_settings.total_num_reads ++; 
+            global_settings.total_num_reads[thread_id] ++; 
         }
         if (onebarcode_bcd21_vector[i].is_weird_read)
         {
-            global_settings.total_num_weird_reads ++; 
+            global_settings.total_num_weird_reads[thread_id] ++; 
         }
 
         if (onebarcode_bcd21_vector[i].read_id == onebarcode_bcd21_vector[i-1].read_id && inner_size(onebarcode_bcd21_vector[i], onebarcode_bcd21_vector[i-1]) > global_settings.inner_size_cutoff) 
@@ -565,7 +586,7 @@ int process_all_bcd21_of_one_barcode(Settings & global_settings, std::vector <Bc
 }
 
 
-int second_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in_bcd21_file, std::string out_bcd22_file)
+int second_round_bcd21_to_bcd22_file (int thread_id, Settings & global_settings, std::string in_bcd21_file, std::string out_bcd22_file, std::string out_weird_reads_file)
 {
     
     int min_num_good_reads;
@@ -593,10 +614,10 @@ int second_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in
 		exit(1);
 	}
 
-    weird_reads_fp = fopen(global_settings.weird_reads_file.c_str(), "w");
+    weird_reads_fp = fopen(out_weird_reads_file.c_str(), "w");
     if (NULL == weird_reads_fp)
     {
-        fprintf(stderr, "ERROR! Failed to open file for writing: %s\n", global_settings.weird_reads_file.c_str());
+        fprintf(stderr, "ERROR! Failed to open file for writing: %s\n", out_weird_reads_file.c_str());
 		exit(1);
     }
 
@@ -613,13 +634,14 @@ int second_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in
     fprintf(out_bcd22_fp, "%s", bcd22_header.c_str());
     
     char * line = new char[line_max];;
-    char * new_bcd = new char[1024]; 
+    char * new_bcd = new char[1024];
+    char * prev_bcd = new char[1024]; 
     char * new_read_id = new char[1024];
     char * cigar_string = new char [4096];
     std::vector <Bcd21> fragment_bcd21_vector;
 
-    std::string curr_bcd = "";
-    int bcd_cnt = 0;
+    
+    int bcd_id = -1;
     int curr_tid = -1;
     frag_id = 0;
 
@@ -632,15 +654,28 @@ int second_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in
     while (gzgets(in_bcd21_fp, line, line_max))
     {
         if (line[0] == '#') { continue; }
+        sscanf(line, "%*d\t%*d\t%*d\t%*d\t%s\t%*s\n", new_bcd);
+        if (strcmp(prev_bcd, new_bcd) != 0)
+        {
+            bcd_id ++;
+            strcpy(prev_bcd, new_bcd);
+        }
+        if (bcd_id % global_settings.n_threads != thread_id )
+        {
+            continue;
+        }
+
         Bcd21 new_bcd21; 
 		convert1line2bcd21(line, new_bcd21, new_bcd, new_read_id, cigar_string);
+        
+        
         if (new_bcd21.flag & (4 + 1024)){ continue; } // ingnore unmapped reads and duplicated reads
 
         if (fragment_bcd21_vector.size() == 0 || new_bcd21.bcd == fragment_bcd21_vector.back().bcd) {
             fragment_bcd21_vector.push_back(new_bcd21);
         }else{
             output_frm_vector.clear();
-            process_all_bcd21_of_one_barcode(global_settings, fragment_bcd21_vector, output_frm_vector, weird_reads_fp);
+            process_all_bcd21_of_one_barcode(thread_id, global_settings, fragment_bcd21_vector, output_frm_vector, weird_reads_fp);
             for (auto & frm : output_frm_vector)
             {
                 fprintf(out_bcd22_fp, "%s\n", frm.output().c_str());
@@ -648,12 +683,13 @@ int second_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in
             fragment_bcd21_vector.clear();
             fragment_bcd21_vector.push_back(new_bcd21);
         }
+        
     }
 
     if (fragment_bcd21_vector.size() > 0)
     {
         output_frm_vector.clear();
-        process_all_bcd21_of_one_barcode(global_settings, fragment_bcd21_vector, output_frm_vector, weird_reads_fp);
+        process_all_bcd21_of_one_barcode(thread_id, global_settings, fragment_bcd21_vector, output_frm_vector, weird_reads_fp);
         for (auto & frm : output_frm_vector)
         {
             fprintf(out_bcd22_fp, "%s\n", frm.output().c_str());
@@ -663,6 +699,7 @@ int second_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in
 
     delete [] line;
     delete [] new_bcd;
+    delete [] prev_bcd;
     delete [] new_read_id;
     delete [] cigar_string; 
     
@@ -674,42 +711,256 @@ int second_round_bcd21_to_bcd22_file (Settings & global_settings, std::string in
 
 }
 
+int merge_bcd22_files(std::string out_file, const std::vector <std::string> & in_file_vector, bool rm_input_files = true)
+{
+    FILE * out_fp;
+    char * line;
+    const int bcd22_line_max = 1<<22;
+    line = new char [bcd22_line_max];
+    std::vector <std::string > col_str_vector; 
+    int32_t frm_id;
+    int frm_id_column_num = 5;
+    
+
+    out_fp = fopen(out_file.c_str(), "w");
+    if (NULL == out_fp)
+    {
+        fprintf(stderr, "ERROR! Failed to open file: %s\n", out_file.c_str());
+        exit(1);
+    }
+
+    frm_id = 0;
+    for (int thread_id = 0; thread_id < in_file_vector.size(); thread_id++)
+    {
+        FILE * in_fp; 
+        in_fp = fopen(in_file_vector[thread_id].c_str(), "r");
+        if (NULL == in_fp)
+        {
+            fprintf(stderr, "ERROR! Failed to open file: %s\n", in_file_vector[thread_id].c_str());
+        }
+        while (fgets(line, bcd22_line_max, in_fp))
+        {
+            if (line[0] == '#')
+            {
+                if (thread_id > 0) { continue; }
+                fprintf(out_fp, line);
+                continue;
+            } 
+            col_str_vector = split_cstring_with_delimiter(line, "\t");
+            for (int i = 0; i < frm_id_column_num; i++)
+            {
+                fprintf(out_fp, "%s\t", col_str_vector[i].c_str()); 
+            }
+            fprintf(out_fp, "%d", frm_id); 
+            for (int i = frm_id_column_num+1; i < col_str_vector.size(); i++)
+            {
+                fprintf(out_fp, "\t%s", col_str_vector[i].c_str()); 
+            }
+            fprintf(out_fp, "\n");
+            frm_id ++;
+        }
+        fclose(in_fp);
+    }
+
+    fclose(out_fp);
+    delete [] line;
+    if (rm_input_files)
+    {
+        for ( auto in_file : in_file_vector)
+        {
+            remove_file(in_file.c_str());
+        }
+    }
+
+    return 0;
+}
+
+
+int simple_merge_files(std::string out_file, const std::vector <std::string> & in_file_vector, bool rm_input_files = true)
+{
+    FILE * out_fp;
+    char * line;
+    const int line_max = 1<<22;
+    line = new char [line_max];
+
+
+    out_fp = fopen(out_file.c_str(), "w");
+    if (NULL == out_fp)
+    {
+        fprintf(stderr, "ERROR! Failed to open file: %s\n", out_file.c_str());
+        exit(1);
+    }
+
+    for (int thread_id = 0; thread_id < in_file_vector.size(); thread_id++)
+    {
+        FILE * in_fp; 
+        in_fp = fopen(in_file_vector[thread_id].c_str(), "r");
+        if (NULL == in_fp)
+        {
+            fprintf(stderr, "ERROR! Failed to open file: %s\n", in_file_vector[thread_id].c_str());
+            exit(1);
+        }
+        while (fgets(line, line_max, in_fp))
+        {
+            if (line[0] == '#')
+            {
+                if (thread_id > 0) { continue; }
+                fprintf(out_fp, line);
+                continue;
+            }
+            fprintf(out_fp, line);       
+        }
+        fclose(in_fp);
+    }
+
+    fclose(out_fp);
+    delete [] line;
+
+    if (rm_input_files)
+    {
+        for ( auto in_file : in_file_vector)
+        {
+            remove_file(in_file.c_str());
+        }
+    }
+    
+    return 0;
+}
+
 int cluster_reads(Settings & global_settings)
 {
 
-    int length_cut;
-    /* first round */
+    int length_cut = 50 * 1000; // initial length cut value
+    int min_num_good_reads;
     std::string tmpbcd22_file;
+    std::vector <std::vector <int>> inner_size_count_2d_vector;
+    std::vector <std::vector <int>> gap_distance_count_2d_vector;
     tmpbcd22_file = global_settings.bcd22_file + ".tmp";
-    length_cut = 50 * 1000; // initial length cut value
+    
+    if (global_settings.n_threads > 8) { global_settings.n_threads = 8;}
+
+    for (int i = 0; i < global_settings.n_threads+1; i++)
+    {
+        global_settings.total_num_reads.push_back(0);
+        global_settings.total_num_weird_reads.push_back(0);
+    }
+
+    if (global_settings.is_wgs) {
+        min_num_good_reads = 6;
+    } else {
+        min_num_good_reads = 3;
+    }
+
+    if (global_settings.user_defined_min_num_good_reads_per_fragment > 0){
+        min_num_good_reads = global_settings.user_defined_min_num_good_reads_per_fragment;
+    }
+    global_settings.min_num_good_reads_per_fragment = min_num_good_reads;
 
 
-    std::vector <int> inner_size_count_vector (MAX_INNER_SIZE+1, 0); 
-    std::vector <int> gap_distance_count_vector(MAX_GAP_DISTANCE+1, 0);
+    std::thread round1_threads[global_settings.n_threads];
+    std::vector <std::string> round1_out_bcd22_file_vector;
+    for (int i = 0; i < global_settings.n_threads; i++)
+    {
+        round1_out_bcd22_file_vector.push_back(tmpbcd22_file + ".thread" + std::to_string(i));
+        std::vector <int> v;
+        inner_size_count_2d_vector.push_back(v);
+        gap_distance_count_2d_vector.push_back(v);
 
-    first_round_bcd21_to_bcd22_file (global_settings, global_settings.bcd21_file, tmpbcd22_file, length_cut, inner_size_count_vector, gap_distance_count_vector);
+        for (int j = 0; j < MAX_INNER_SIZE+10; j++)
+        {
+            inner_size_count_2d_vector[i].push_back(0);
+        }
+        for (int j = 0; j < MAX_GAP_DISTANCE+10; j++)
+        {
+            gap_distance_count_2d_vector[i].push_back(0);
+        }
+    }
 
-    estimate_distribution (global_settings, inner_size_count_vector, gap_distance_count_vector); 
+    fprintf(stderr, "started round 1 clustering\n");
 
-    fprintf(stderr, "started second round\n");
-    second_round_bcd21_to_bcd22_file (global_settings, global_settings.bcd21_file, global_settings.bcd22_file);
+    using namespace std::chrono; 
+    auto start_time = high_resolution_clock::now(); 
+    for (int i = 0; i < global_settings.n_threads; i++)
+    {
+        round1_threads[i] = std::thread(first_round_bcd21_to_bcd22_file, i, std::ref(global_settings), global_settings.bcd21_file, round1_out_bcd22_file_vector[i], length_cut, std::ref(inner_size_count_2d_vector[i]), std::ref(gap_distance_count_2d_vector[i]));
+    }
 
-    fprintf(stderr, "total number of reads is: %d\n", global_settings.total_num_reads);
-    fprintf(stderr, "total number of weird reads is: %d\n", global_settings.total_num_weird_reads);
+    for (int i = 0; i < global_settings.n_threads; i++)
+    {
+        round1_threads[i].join();
+    }
+    auto stop_time = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop_time - start_time); 
+    double time_used = (double) duration.count() / 1e6; 
+    fprintf(stderr, "finished round 1 clustering\n");
+    fprintf(stderr, "time used is %.2f seconds\n", time_used);
+    merge_bcd22_files(tmpbcd22_file, round1_out_bcd22_file_vector, true);
+    
+    estimate_distribution (global_settings, inner_size_count_2d_vector, gap_distance_count_2d_vector); 
+    
+
+    std::thread round2_threads[global_settings.n_threads];
+    std::vector <std::string> round2_out_bcd22_file_vector;
+    std::vector <std::string> weird_reads_file_vector;
+
+    for (int i = 0; i < global_settings.n_threads; i++)
+    {
+        round2_out_bcd22_file_vector.push_back(global_settings.bcd22_file + ".thread" + std::to_string(i));
+        weird_reads_file_vector.push_back(global_settings.weird_reads_file + ".thread" + std::to_string(i));
+    }
+
+    fprintf(stderr, "started round 2 clustering\n");
+    start_time = high_resolution_clock::now(); 
+    for (int i = 0; i < global_settings.n_threads; i++)
+    {
+        round2_threads[i] = std::thread(second_round_bcd21_to_bcd22_file, i, std::ref(global_settings), global_settings.bcd21_file, round2_out_bcd22_file_vector[i], weird_reads_file_vector[i]);
+    }
+
+    for (int i = 0; i < global_settings.n_threads; i++)
+    {
+        round2_threads[i].join();
+    }
+    stop_time = high_resolution_clock::now(); 
+    duration = duration_cast<microseconds>(stop_time - start_time); 
+    time_used = (double) duration.count() / 1e6; 
+    fprintf(stderr, "finished round 2 clustering\n");
+    fprintf(stderr, "time used is %.2f seconds\n", time_used);
+
+    merge_bcd22_files(global_settings.bcd22_file, round2_out_bcd22_file_vector, true);
+
+    simple_merge_files(global_settings.weird_reads_file, weird_reads_file_vector, true);
+
+    for (int i = 0; i < global_settings.n_threads; i++)
+    {
+        global_settings.total_num_reads[global_settings.n_threads] += global_settings.total_num_reads[i];
+        global_settings.total_num_weird_reads[global_settings.n_threads] += global_settings.total_num_weird_reads[i];
+    }
+
+    fprintf(stderr, "total number of reads is: %d\n", global_settings.total_num_reads[global_settings.n_threads]);
+    fprintf(stderr, "total number of weird reads is: %d\n", global_settings.total_num_weird_reads[global_settings.n_threads]);
+    
 
     return 0;
 }
 
-int usage(FILE * fp)
-{
-    fprintf (fp, "Usage: cluster_reads <in.bcd21> <output_bcd22> <output_weird_read_file> <is_wgs> <user_defined_min_num_good_reads_per_fragment> <min_mapq>\n");
-    return 0;
-}
 
 int main (int argc, char * argv[])
 {
-    if (argc < 7){
-        usage(stderr);
+    std::string usage; 
+
+    usage = "Usage: cluster_reads <in.bcd21> <output_bcd22> <output_weird_read_file> <is_wgs> <user_defined_min_num_good_reads_per_fragment> <min_mapq> <n_threads>\n";
+
+    int min_arg_num = 0; 
+    for (int i = 0; i < usage.size(); i++)
+    {
+        if (usage[i] == '<')
+        {
+            min_arg_num++; 
+        }
+    }
+    
+    if (argc < min_arg_num + 1){
+        std::cerr << usage << std::endl;
         return 1;
     }
 
@@ -721,6 +972,7 @@ int main (int argc, char * argv[])
     global_settings.is_wgs = atoi(argv[4]);
     global_settings.min_mapq = atoi(argv[5]);
     global_settings.user_defined_min_num_good_reads_per_fragment = atoi(argv[6]);
+    global_settings.n_threads = atoi(argv[7]);
     
     cluster_reads(global_settings);
 

@@ -92,7 +92,7 @@ int chrname2tid(const char * chrname, const CHR_INFO * chr_info)
 	if (ret == 0){
 		return tid;
 	}else{
-		fprintf(stderr, "ERROR! %s is not found in hash map!\n", chrname);
+		fprintf(stderr, "WARNING! %s is not found in hash map!\n", chrname);
 		return -1;
 	}
 }
@@ -527,6 +527,7 @@ int get_interval_vector_from_bed_file(const std::string & input_bed_file, const 
     {
         sscanf (line, "%s\t%d\t%d\t%*s\n", ctg, &itv.start_pos, &itv.end_pos);
         itv.tid = chr_to_tid(ctg, chr_info);
+        if (itv.tid < 0) { continue; }
         itv.ctg = chr_info->chrname_list->data_list[itv.tid];
         db_interval_vector.push_back(itv);
     }
@@ -601,6 +602,16 @@ int calculate_distribution_from_count_vector(const std::vector<int> & input_coun
                 quantile_numbers.q[j] = i;
             }
         }
+    }
+    return 0;
+}
+
+
+int remove_file(const char * file_name)
+{
+    if (remove( file_name ) != 0)
+    {
+        fprintf(stderr, "Error deleting file: %s\n", file_name);
     }
     return 0;
 }

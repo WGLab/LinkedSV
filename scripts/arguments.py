@@ -51,6 +51,7 @@ class global_parameter:
 
         self.sortn_bam_core_file = self.out_prefix + '.sortn.bam.coreinfo.gz' 
         self.weird_reads_file  = self.out_prefix + '.weird_reads.txt' 
+        self.weird_reads_cluster_file = self.out_prefix + '.weird_reads.clusters.txt' 
         
         self.alt_chr_name_set = set()
         self.alt_tid_set = set()
@@ -61,6 +62,7 @@ class global_parameter:
         self.remove_sparse_nodes = os.path.join(self.root_dir, 'bin/remove_sparse_nodes');
         self.output_bam_coreinfo = os.path.join(self.root_dir, 'bin/output_bam_coreinfo');
         self.cal_read_depth_from_bcd21 = os.path.join(self.root_dir, 'bin/cal_read_depth_from_bcd21');
+        self.cal_hap_read_depth_from_bcd21 = os.path.join(self.root_dir, 'bin/cal_hap_read_depth_from_bcd21');
         self.cal_barcode_depth_from_bcd21 = os.path.join(self.root_dir, 'bin/cal_barcode_depth_from_bcd21');
         self.cal_centroid_from_read_depth = os.path.join(self.root_dir, 'bin/cal_centroid_from_read_depth');
         self.cal_twin_win_bcd_cnt = os.path.join(self.root_dir, 'bin/cal_twin_win_bcd_cnt');
@@ -70,6 +72,9 @@ class global_parameter:
         self.cal_2d_overlapping_barcodes = os.path.join(self.root_dir, 'bin/cal_2d_overlapping_barcodes')
         self.pigz = os.path.join(self.root_dir, 'bin/pigz')
         self.cluster_reads = os.path.join(self.root_dir, 'bin/cluster_reads')
+        self.fermikit_dir = os.path.join(self.root_dir, 'fermikit/fermi.kit')
+        self.call_small_deletions_binary = os.path.join(self.root_dir, 'bin/call_small_deletions')
+
 
         self.alt_ctg_file  = os.path.join(self.root_dir, 'black_lists/alternative_contigs.txt')
 
@@ -111,6 +116,8 @@ class global_parameter:
 
         self.read_depth_file = self.out_prefix + '.read_depth.txt'
         self.hap_type_read_depth_file = self.out_prefix + '.hap_depth.txt'
+        self.small_del_call_file = self.out_prefix + '.small_deletions.bedpe'
+
         self.chrname2tid = None
         self.tid2chrname = None
         self.global_distribution_calculated = False
@@ -184,7 +191,7 @@ class endpoint_parameter:
         self.prefix = global_args.out_prefix + '.endpoints'
         self.bcd21_file = global_args.out_prefix + '.bcd21.gz' # sorting results 
         self.low_mapq_bcd21_file = global_args.out_prefix + '.low_mapq.bcd21.gz' # sorting results 
-        self.tmpbcd22_file = global_args.out_prefix + '.tmpbcd22'
+        self.tmpbcd22_file = global_args.out_prefix + '.bcd22.tmp'
         self.bcd21_file_of_target_region = global_args.out_prefix + '.on_target.bcd21.gz'
         self.bcd22_file = global_args.out_prefix + '.bcd22' # result of clustering (fragment file)
         self.bcd23_file = global_args.out_prefix + '.bcd23' # candidate fragments (long) 

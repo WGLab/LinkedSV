@@ -18,7 +18,8 @@ from scripts import quantify2bkcand
 from scripts import merge_quantified_calls 
 from scripts import filter_calls
 from scripts import arguments
-#from scripts import visualize_sv_calls
+from scripts import detect_small_deletions
+from scripts import visualize_sv_calls
 
 
 tab = '\t'
@@ -26,6 +27,8 @@ endl = '\n'
 
 FIX_LENGTH = int(1e10)
 TimeFormat = '%m/%d/%Y %H:%M:%S'
+
+debug = 0
 
 def main():
 
@@ -35,6 +38,7 @@ def main():
 
     args.global_distribution_calculated = False
 
+    
     extract_barcode_from_bam(args, endpoint_args)
 
     detect_increased_fragment_ends(args, dbo_args, endpoint_args)
@@ -69,7 +73,7 @@ def main():
     image_out_dir = os.path.join(args.out_dir, 'images')
     my_utils.make_dir(image_out_dir)
 
-    #visualize_sv_calls.visualize_sv_calls (args.filter_bedpe_file, dbo_args.bcd13_file, endpoint_args.bcd21_file, args.faidx_file, args.cal_2d_overlapping_barcodes, args.cal_read_depth_from_bcd21, image_out_dir, args.bam_name)
+    visualize_sv_calls.visualize_sv_calls (args.filter_bedpe_file, dbo_args.bcd13_file, endpoint_args.bcd21_file, args.faidx_file, args.cal_2d_overlapping_barcodes, args.cal_read_depth_from_bcd21, image_out_dir, args.bam_name)
 
     ## remove temp files ##
     if args.rm_temp_files: 
@@ -89,11 +93,19 @@ def main():
         args.temp_file_list.append(args.quantified_bk_pair_file)
         args.temp_file_list.append(args.bk_cand_pair_file)
         args.temp_file_list.append(endpoint_args.bcd22_file)
+        args.temp_file_list.append(endpoint_args.tmpbcd22_file)
         args.temp_file_list.append(args.weird_reads_file)
         args.temp_file_list.append(endpoint_args.low_mapq_bcd21_file)
         args.temp_file_list.append(endpoint_args.bcd21_file + '.split')
         args.temp_file_list.append(dbo_args.bcd11_file)
         args.temp_file_list.append(dbo_args.bcd12_file)
+        args.temp_file_list.append(args.weird_reads_file)
+        args.temp_file_list.append(args.weird_reads_cluster_file)
+        args.temp_file_list.append(args.hap_type_read_depth_file)
+        args.temp_file_list.append(dbo_args.bcd13_file)
+        args.temp_file_list.append(args.read_depth_file)
+        
+        
 
 
         for temp_file in args.temp_file_list:
@@ -163,6 +175,7 @@ def detect_decreased_barcode_overlap (args, dbo_args, endpoint_args):
 
 def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
 
+    
     gc.enable()
 
     ### clustering reads | output file: bcd22 file
@@ -173,16 +186,23 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
     else:
         is_wgs = 0
 
+    
     if args.run_from_begining == False and my_utils.check_file_exists (endpoint_args.bcd22_file):
         my_utils.myprint('bcd22 file existed, skipped %s' % (task))
     else:
         my_utils.myprint(task)
     
-        cmd = '%s %s %s %s %d %d %d' % (args.cluster_reads, endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.weird_reads_file, is_wgs, args.user_defined_min_reads_in_fragment, args.min_mapq)
+        cmd = '%s %s %s %s %d %d %d %d' % (args.cluster_reads, endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.weird_reads_file, is_wgs, args.user_defined_min_reads_in_fragment, args.min_mapq, args.n_thread)
         my_utils.myprint(cmd)
         os.system(cmd)
     
     gc.collect()
+
+    
+    
+    rm_temp_files = 1
+    detect_small_deletions.detect_small_deletions(args.input_bam, args.out_dir, args.small_del_call_file, args.n_thread, args.ref_fa, args.fermikit_dir, args.samtools, args.bedtools, args.weird_reads_file, args.weird_reads_cluster_file, args.call_small_deletions_binary, args.cal_hap_read_depth_from_bcd21, endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.hap_type_read_depth_file, args.gap_region_bed_file, rm_temp_files) 
+    
 
     ### searching for extremely high coverage region  
 
@@ -223,7 +243,7 @@ def extract_barcode_from_bam (args, endpoint_args):
 
     cmd = '%s %s | %s sort -l 1 -m 2G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
 
-    if my_utils.check_file_exists(args.sortbx_bam):
+    if args.run_from_begining == False and my_utils.check_file_exists(args.sortbx_bam):
         my_utils.myprint('File: %s existed, skipped sorting bam by barcode' % args.sortbx_bam)
     else:
         my_utils.myprint('sorting bam file by barcode')

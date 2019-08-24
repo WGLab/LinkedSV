@@ -1,3 +1,8 @@
+
+#ifndef CLUSTER_READS_H
+#define CLUSTER_READS_H
+
+
 # include <iostream>
 # include <vector>
 # include <string>
@@ -168,8 +173,9 @@ public:
 	int min_mapq;
 	int inner_size_cutoff; 
     int gap_distance_cutoff;
-    int total_num_reads; 
-    int total_num_weird_reads;
+    std::vector <int> total_num_reads;  // total_num_reads of each threads. 
+    std::vector <int> total_num_weird_reads;
+    int n_threads;
     
  
 	Settings() {
@@ -178,11 +184,12 @@ public:
 		bcd21_file = "";
 		bcd22_file = "";
 		weird_reads_file = "";
-        total_num_reads = 0; 
-        total_num_weird_reads = 0; 
+        total_num_reads.clear(); 
+        total_num_weird_reads.clear(); 
 		user_defined_min_num_good_reads_per_fragment = -1;
 		min_num_good_reads_per_fragment = 6; // default of wgs
 		min_mapq = 20;
+        n_threads = 1;
 
         if (is_wgs){
             gap_distance_cutoff = 10000;
@@ -192,3 +199,7 @@ public:
 	}
 
 };
+
+
+
+#endif 

@@ -40,7 +40,7 @@ def myprint(string):
         mem_usage = mem_usage/1e3
         mem_usage_str = ' (%3.3f KB)' % mem_usage
 
-    print >> sys.stderr, '[' + datetime.now().strftime(TimeFormat) +  mem_usage_str + ']', string
+    sys.stderr.write('[' + datetime.now().strftime(TimeFormat) +  mem_usage_str + '] ' + string + endl)
 
     return
 
