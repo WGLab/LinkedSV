@@ -28,13 +28,13 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
 
 ### <a name="Prerequisites"></a> Prerequisites
 
-Most of the source code was written in Python, but the time-consuming steps were written in C. It uses htslib to process bam files.
+Most of the source code was written in Python, but the time-consuming steps were written in C++11. It uses htslib to process bam files.
 
 The following software tools and packages are required for the installation of LinkedSV. 
 
-1. GCC (version >= 4.4)
+1. c++ compiler (A c++ compiler that supports C++11 is needed to build LinkedSV. Development of the code is performed using g++ v4.8.5)
 
-2. Python (version: 2.7)
+2. Python (version: >= 2.7 python 3 is supported)
 
 3. Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime
 
