@@ -8,46 +8,58 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-import my_utils
-import bedpe
-import bed
-import plot_read_depth
-import plot_2d_barcodes
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils
 
+try:
+    from scripts import bedpe
+except ImportError:
+    import bedpe
+try:
+    from scripts import bed
+except ImportError:
+    import bed
+
+try:
+    from scripts import plot_read_depth
+except ImportError:
+    import plot_read_depth
+
+try:
+    from scripts import plot_2d_barcodes
+except ImportError:
+    import plot_2d_barcodes
+
+try:
+    from scripts import arguments
+except ImportError:
+    import arguments
 
 tab  = '\t'
 endl = '\n'
-arg = sys.argv[1:]
-
-usage = 'python ' + __file__ + ' ' + '<in.svcalls.bedpe> <bcd13_file> <bcd21_file> <faidx_file> <cal_2d_overlapping_barcodes_binary> <cal_read_depth_from_bcd21> <out_dir> <out_prefix>'
-argc  = 8 
-
 
 def main():
-    if len(arg) < argc:
-        print (usage)
-        sys.exit()
 
-    in_svcalls_bedpe_file = arg.pop(0)
-    bcd13_file = arg.pop(0)
-    bcd21_file = arg.pop(0)
-    faidx_file = arg.pop(0)
-    cal_2d_overlapping_barcodes_binary = arg.pop(0)
-    cal_read_depth_from_bcd21_binary = arg.pop(0)
-    out_dir = arg.pop(0)
-    out_prefix = arg.pop(0)
+    args, dbo_args, endpoint_args = arguments.parse_user_arguments()
 
-    visualize_sv_calls(in_svcalls_bedpe_file, bcd13_file, bcd21_file, faidx_file, cal_2d_overlapping_barcodes_binary, cal_read_depth_from_bcd21_binary, out_dir, out_prefix)
+    visualize_sv_calls(args, dbo_args, endpoint_args)
 
     return
 
-def visualize_sv_calls(in_svcalls_bedpe_file, bcd13_file, bcd21_file, faidx_file, cal_2d_overlapping_barcodes_binary, cal_read_depth_from_bcd21_binary, out_dir, out_prefix):
+def visualize_sv_calls(args, dbo_args, endpoint_args):
 
-    out_dir = os.path.abspath(out_dir)
+    in_svcalls_bedpe_file = args.filter_bedpe_file
+    bcd13_file = dbo_args.bcd13_file
+    bcd21_file = endpoint_args.bcd21_file
+    faidx_file = args.faidx_file
+    cal_2d_overlapping_barcodes_binary = args.cal_2d_overlapping_barcodes
+    cal_read_depth_from_bcd21_binary = args.cal_read_depth_from_bcd21
+    out_dir = args.image_out_dir
+    out_prefix = args.bam_name
+
     my_utils.make_dir(out_dir)
-
-    cal_2d_overlapping_barcodes_binary = os.path.abspath(cal_2d_overlapping_barcodes_binary)
-    cal_read_depth_from_bcd21_binary = os.path.abspath(cal_read_depth_from_bcd21_binary)
 
     chr_len_list = my_utils.get_chr_length(faidx_file)
     tid2chrname_list, chrname2tid_dict = my_utils.get_chrnames(faidx_file)
@@ -122,13 +134,21 @@ def plot_heatmap(in_svcall_list, bcd21_file, faidx_file, out_dir, flank_dist, ch
 def plot_depth(cal_read_depth_from_bcd21_binary, bcd21_file, in_svcalls_list, faidx_file, chr_len_list, tid2chrname_list, chrname2tid_dict, out_dir, out_prefix):
 
     if os.path.exists(cal_read_depth_from_bcd21_binary) == False:
-        my_utils.myprint('ERROR! The binary file doesn\'t exist:%s\nSkipped plotting read depth' % cal_read_depth_from_bcd21_binary)
+        my_utils.myprint('ERROR! The binary file doesn\'t exist:%s\Failed to plot read depth' % cal_read_depth_from_bcd21_binary)
+        return
+    
+    if os.path.exists(bcd21_file) == False:
+        my_utils.myprint('ERROR! The bcd21 file doesn\'t exist:%s\Failed to plot read depth' % bcd21_file)
+        return
+
+    if os.path.exists(faidx_file) == False:
+        my_utils.myprint('ERROR! The fasta index file doesn\'t exist:%s\Failed to plot read depth' % faidx_file)
         return
 
     out_dir = os.path.join(out_dir, 'read_depth')
     my_utils.make_dir(out_dir)
 
-    bin_size = 1000
+    bin_size = 500
     read_depth_file = os.path.join(out_dir, '%s.read_depth.txt' % out_prefix)
     cmd_args_list = [cal_read_depth_from_bcd21_binary, bcd21_file, read_depth_file, faidx_file, str(bin_size), '20']
     my_utils.myprint('calculating read depth from file: %s' % bcd21_file)
@@ -151,6 +171,8 @@ def plot_depth(cal_read_depth_from_bcd21_binary, bcd21_file, in_svcalls_list, fa
         out_file = os.path.join(out_dir, '%s.%s.read_depth.png' % (out_prefix, svcall.sv_id))
         figure_title = 'Read depth (%s, %d bp %s)' % (svcall.sv_id, svcall.end2 - svcall.start1, svcall.svtype)
         plot_read_depth.plot_read_depth_for1region(svcall.chrm1, svcall.tid1, svcall.start1, svcall.end2, out_file, figure_title, wg_high_mapq_depth_list, wg_total_depth_list, chr_len_list, bin_size, wg_avg_depth)
+
+    os.remove(read_depth_file)
 
     return
 

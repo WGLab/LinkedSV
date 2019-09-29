@@ -2,7 +2,11 @@
 
 import os
 import sys
-from my_utils import *
+
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
 
 class Fragment:
     def __init__(self, attr_list):

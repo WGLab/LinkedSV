@@ -3,7 +3,11 @@
 tab  = '\t'
 endl = '\n'
 
-from my_utils import *
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
+
 
 class Bedpe:
     def __init__(self, chrm1, start1, end1, chrm2, start2, end2):

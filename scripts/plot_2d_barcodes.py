@@ -11,7 +11,11 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
-import my_utils
+
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils
 
 tab  = '\t'
 endl = '\n'
@@ -55,8 +59,8 @@ def plot_2d_overlapping_barcodes(in_2d_values_file, target_region_bedpe_list, bi
             xmax = int(xmax)
             ymin = int(ymin)
             ymax = int(ymax)
-            xsize = (xmax - xmin)/bin_size
-            ysize = (ymax - ymin)/bin_size
+            xsize = int((xmax - xmin)/bin_size)
+            ysize = int((ymax - ymin)/bin_size)
             ovl_2d_array = np.zeros(shape = (xsize, ysize), dtype=np.int32)
             current_x = 0
             current_y = 0
@@ -113,8 +117,8 @@ def plot_one_bedpe(out_dir, target_region_bedpe_list, out_prefix, region_title, 
         sv_id = '%s_%s_%s.%s_%s_%s' % (xchr, xstart, xend, ychr, ystart, yend)
         svtype = 'unknown_sv_type'
 
-    xsize = (xmax - xmin) / bin_size
-    ysize = (ymax - ymin) / bin_size
+    xsize = int((xmax - xmin) / bin_size)
+    ysize = int((ymax - ymin) / bin_size)
 
     pd_ovl_2d_array = pd.DataFrame(tp_ovl_2d_array)
     xticks_dict = dict()

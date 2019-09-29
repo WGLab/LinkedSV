@@ -1,11 +1,23 @@
 #!/usr/bin/env python
 
-from my_utils import *
-from bed import *
-from bedpe import *
 from scipy import spatial
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
+
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
+
+try:
+    from scripts.bed import *
+except ImportError:
+    from bed import *
+
+try:
+    from scripts.bedpe import *
+except ImportError:
+    from bedpe import *
 
 def main():
     

@@ -2,9 +2,13 @@
 
 import os
 import sys
-import my_utils
 import time
 import multiprocessing
+
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils
 
 tab = '\t'
 endl = '\n'

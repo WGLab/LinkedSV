@@ -94,7 +94,7 @@ def split_bcd21_file(bcd21_file, n_bcd_per_file, readname_fileid_dict):
     split_barcode_list = list()
 
     if bcd21_file[-2:] == 'gz':
-        bcd21_fp = gzip.open(bcd21_file, 'r')
+        bcd21_fp = gzip.open(bcd21_file, 'rt')
     else:
         bcd21_fp = open(bcd21_file, 'r')
 

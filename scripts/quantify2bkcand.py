@@ -2,10 +2,6 @@
 
 import math
 import numpy as np
-from my_utils import *
-from fragment import *
-from bed import *
-from bedpe import *
 import bisect
 from scipy import spatial
 from scipy.sparse import csr_matrix
@@ -15,9 +11,38 @@ from scipy.stats import gamma
 from scipy.stats import norm 
 from scipy.stats import expon
 from scipy import stats
-import global_distribution
 
-from get_high_coverage_regions import *
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
+
+try:
+    from scripts.fragment import *
+except ImportError:
+    from fragment import *
+
+try:
+    from scripts.bed import *
+except ImportError:
+    from bed import *
+
+try:
+    from scripts.bedpe import *
+except ImportError:
+    from bedpe import *
+
+try:
+    from scripts import global_distribution
+except ImportError:
+    import global_distribution
+
+try:
+    from scripts.get_high_coverage_regions import *
+except ImportError:
+    from get_high_coverage_regions import *
+
+
 
 def main():
     
@@ -187,7 +212,7 @@ def get_p_value_from_bcd13_file(bcd13_file, faidx_file, bin_size):
         tid = int(line[0])
         pos = int(line[1])
         p_value = float(line[8])
-        idx = pos / bin_size
+        idx = int(pos / bin_size)
         if tid > len(twin_windows_p_value_list)-1 or idx > len(twin_windows_p_value_list[tid])-1 :
             myprint('ERROR! bcd13_file does not match with faidx_file!')
             myprint('tid=%d, pos=%d, len(twin_windows_p_value_list)=%d, len(twin_windows_p_value_list[%d]=%d' % (tid, pos, len(twin_windows_p_value_list), tid, len(twin_windows_p_value_list[tid])))
@@ -788,7 +813,7 @@ def get_shared_frag_list(fragment_list1, fragment_list2):
     for frm in fragment_list1:
         if frm.bcd in shared_bcd_set and frm.frag_id not in shared_frm_id_set:
             if frm.bcd in shared_fragment_dict1:
-                if frm.num_reads > shared_fragment_dict1[frm.bcd]:
+                if frm.num_reads > shared_fragment_dict1[frm.bcd].num_reads:
                     shared_fragment_dict1[frm.bcd] = frm
             else:
                 shared_fragment_dict1[frm.bcd] = frm
@@ -796,7 +821,7 @@ def get_shared_frag_list(fragment_list1, fragment_list2):
     for frm in fragment_list2:
         if frm.bcd in shared_bcd_set and frm.frag_id not in shared_frm_id_set:
             if frm.bcd in shared_fragment_dict2:
-                if frm.num_reads > shared_fragment_dict2[frm.bcd]:
+                if frm.num_reads > shared_fragment_dict2[frm.bcd].num_reads:
                     shared_fragment_dict2[frm.bcd] = frm
             else:
                 shared_fragment_dict2[frm.bcd] = frm
@@ -805,6 +830,7 @@ def get_shared_frag_list(fragment_list1, fragment_list2):
     shared_fragment_list2 = list()
 
     for bcd in shared_fragment_dict1:
+        if bcd not in shared_fragment_dict2: continue
         shared_fragment_list1.append(shared_fragment_dict1[bcd])
         shared_fragment_list2.append(shared_fragment_dict2[bcd])
 

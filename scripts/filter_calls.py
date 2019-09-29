@@ -2,14 +2,32 @@
 
 import os
 import sys
-from my_utils import *
-from bedpe import *
 import gzip
 from scipy.spatial import * 
 import bisect
 import math
-import plot_read_depth
 import numpy as np
+
+try:
+    from scripts import plot_read_depth
+except ImportError:
+    import plot_read_depth
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils
+try:
+    from scripts import bedpe
+except ImportError:
+    import bedpe
+try:
+    from scripts import arguments
+except ImportError:
+    import arguments
+
+
+tab = '\t'
+endl = '\n'
 
 class Bcd21Core:
 
@@ -21,10 +39,10 @@ class Bcd21Core:
         self.mapq = int(self.mapq)
 
     def key_start(self):
-        return self.tid * FIX_LENGTH + self.start
+        return self.tid * my_utils.FIX_LENGTH + self.start
 
     def key_end(self):
-        return self.tid * FIX_LENGTH + self.end
+        return self.tid * my_utils.FIX_LENGTH + self.end
 
 class D2:
     def __init__(self, pos1, pos2_list):
@@ -34,89 +52,91 @@ class D2:
 
 def main():
 
-    args, dbo_args, endpoint_args = parse_user_arguments()
+    args, dbo_args, endpoint_args = arguments.parse_user_arguments()
 
     filter_calls(args, dbo_args, endpoint_args)
 
 def filter_calls(args, dbo_args, endpoint_args):
 
-    myprint('filtering SV calls')
+    my_utils.myprint('filtering SV calls')
 
     bin_size = 100
-    tid2chrname_list, chrname2tid_dict = get_chrnames(args.faidx_file)
-    alt_chr_name_set = read_alternative_contig_file (args.alt_ctg_file)
+    tid2chrname_list, chrname2tid_dict = my_utils.get_chrnames(args.faidx_file)
+    alt_chr_name_set = my_utils.read_alternative_contig_file (args.alt_ctg_file)
 
     if os.path.exists(args.black_region_bed_file):
-        myprint ('reading black region bed file: %s' % args.black_region_bed_file)
+        my_utils.myprint ('reading black region bed file: %s' % args.black_region_bed_file)
         black_reg_dict = read_black_reg_bed_file (args.black_region_bed_file, bin_size)
     else:
         if args.ref_version == 'hg19' or args.ref_version == 'hg38' or args.ref_version == 'b37':
-            myprint ('ERROR! black list file is missing: %s' % black_region_bed_file)
+            my_utils.myprint ('ERROR! black list file is missing: %s' % black_region_bed_file)
         black_reg_dict = dict()
 
     if os.path.exists(args.gap_region_bed_file):
         gap_left_region_dict, gap_right_region_dict = read_gap_region_file (args.gap_region_bed_file, bin_size)
-        myprint ('reading gap region bed file: %s' % args.gap_region_bed_file)
+        my_utils.myprint ('reading gap region bed file: %s' % args.gap_region_bed_file)
     else:
         if args.ref_version == 'hg19' or args.ref_version == 'hg38' or args.ref_version == 'b37':
-            myprint ('ERROR! gap region file is missing: %s' % args.gap_region_bed_file)
+            my_utils.myprint ('ERROR! gap region file is missing: %s' % args.gap_region_bed_file)
         gap_left_region_dict = dict()
         gap_right_region_dict = dict()
 
-    raw_svcall_list = read_object_file(args.merged_bedpe_file, QuantifiedBKCandCore)
+    raw_svcall_list = my_utils.read_object_file(args.merged_bedpe_file, bedpe.QuantifiedBKCandCore)
     for i in range(0, len(raw_svcall_list)):
         raw_svcall_list[i].ft = '.'
 
-
-    myprint ('round 1 filtering started')
+    my_utils.myprint ('round 1 filtering started')
     round1_retained_sv_list = filter_1d_blacklist(raw_svcall_list, black_reg_dict, alt_chr_name_set, gap_left_region_dict, gap_right_region_dict, bin_size )
-    myprint ('round 1 filtering finished')
+    my_utils.myprint ('round 1 filtering finished')
     n_retained_sv = 0
     for svcall in round1_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
-    myprint('number of retained SVs: %d' % n_retained_sv)
+    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
         
 
-    myprint ('round 2 filtering started')
+    my_utils.myprint ('round 2 filtering started')
     round2_retained_sv_list = filter_low_mapq_gaps(round1_retained_sv_list, endpoint_args, chrname2tid_dict) 
-    myprint ('round 2 filtering finished')
+    my_utils.myprint ('round 2 filtering finished')
     n_retained_sv = 0
     for svcall in round2_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
-    myprint('number of retained SVs: %d' % n_retained_sv)
+    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
     
-    myprint ('round 3 of filtering started')
+    my_utils.myprint ('round 3 of filtering started')
 
     if args.ref_version == 'b37':
         remove_chr_prefix = True
     else:
         remove_chr_prefix = False
 
-    myprint ('round 3 filtering started')
+    my_utils.myprint ('round 3 filtering started')
     round3_retained_sv_list = filter_calls_2d (round2_retained_sv_list, args.black_region_2d_file, args.filter_bedpe_file, remove_chr_prefix)
-    myprint ('round 3 filtering finished')
+    my_utils.myprint ('round 3 filtering finished')
     n_retained_sv = 0
     for svcall in round3_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
-    myprint('number of retained SVs: %d' % n_retained_sv)
+    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
 
-    myprint ('round 4 filtering started')
+    my_utils.myprint ('round 4 filtering started')
     round4_retained_sv_list = filter_dbo_score (round3_retained_sv_list, args)
-    myprint ('round 4 filtering finished')
+    my_utils.myprint ('round 4 filtering finished')
     n_retained_sv = 0
     for svcall in round4_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
-    myprint('number of retained SVs: %d' % n_retained_sv)
+    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
 
-    myprint ('round 5 filtering started')
+    my_utils.myprint ('round 5 filtering started')
     round5_retained_sv_list = filter_read_depth (round4_retained_sv_list, args)
-    myprint ('round 5 filtering finished')
-    n_retained_sv = 0
-    for svcall in round5_retained_sv_list:
-        if svcall.ft == '.': n_retained_sv += 1
-    myprint('number of retained SVs: %d' % n_retained_sv)
+    my_utils.myprint ('round 5 filtering finished')
 
-    final_retained_sv_list = round5_retained_sv_list
+    round6_retained_sv_list = filter_sv_length (round5_retained_sv_list, args)
+
+    final_retained_sv_list = round6_retained_sv_list
+
+    n_retained_sv = 0
+    for svcall in final_retained_sv_list:
+        if svcall.ft == '.': n_retained_sv += 1
+    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
 
     header  = '#chrom1\tstart1\tstop1\tchrom2\tstart2\tstop2\t'
     header += 'sv_type\tsv_id\tsv_length\tfilter\t'
@@ -138,21 +158,28 @@ def filter_calls(args, dbo_args, endpoint_args):
             sv_id_str = '0' * (n_digit - len(sv_id_str)) + sv_id_str
             svcall.sv_id = 'ID%s' % sv_id_str
             out_fp.write(svcall.output_core() + endl)
-        else:
-            print(svcall.output_core() + endl)
 
     out_fp.close()
 
     return
+
+def filter_sv_length (input_sv_list, args):
+    for j in range(0, len(input_sv_list)):
+        svcall = input_sv_list[j]
+        if svcall.chrm1 != svcall.chrm2: continue
+        if int(svcall.svlength)  < 5000: 
+            input_sv_list[j].ft = 'LENGTH_FILTER'
+
+    return input_sv_list
 
 def filter_read_depth(input_sv_list, args):
 
     if args.is_wgs == False or args.germline_mode == False:
         return input_sv_list 
 
-    chr_len_list = get_chr_length(args.faidx_file)
+    chr_len_list = my_utils.get_chr_length(args.faidx_file)
 
-    tid2chrname_list, chrname2tid_dict = get_chrnames(args.faidx_file)
+    tid2chrname_list, chrname2tid_dict = my_utils.get_chrnames(args.faidx_file)
 
     wg_high_mapq_depth_list, wg_total_depth_list, bin_size = plot_read_depth.get_wg_depth_list(args.read_depth_file, chr_len_list)
 
@@ -171,12 +198,13 @@ def filter_read_depth(input_sv_list, args):
         n_dots = len(sv_region_total_depth_list)
         if n_dots < 2: continue
 
-        mean_reg_total_depth = np.mean(sv_region_total_depth_list)
-        zscore_reg_total_depth = (mean_reg_total_depth - wg_depth_mean) * n_dots / (wg_depth_std)
+        mean_reg_total_depth = np.median(sv_region_total_depth_list)
+        q1_reg_total_depth = np.percentile(sv_region_total_depth_list, 0.25)
+        q3_reg_total_depth = np.percentile(sv_region_total_depth_list, 0.75)
 
-        if svcall.svtype == 'DEL' and (zscore_reg_total_depth <= -2 or mean_reg_total_depth <= wg_depth_mean * 0.75):
+        if svcall.svtype == 'DEL' and (mean_reg_total_depth <= wg_depth_mean * 0.667 and q3_reg_total_depth < wg_depth_mean):
             continue
-        elif svcall.svtype == 'DUP' and (zscore_reg_total_depth >= 2 or mean_reg_total_depth >= wg_depth_mean * 1.25) :
+        elif svcall.svtype == 'DUP' and (mean_reg_total_depth >= wg_depth_mean * 1.25 and q1_reg_total_depth > wg_depth_mean):
             continue
         else:
             input_sv_list[j].ft = 'DEPTH_FILTER'
@@ -201,20 +229,20 @@ def get_mean_std_depth(wg_depth_list):
 
     return wg_depth_mean, wg_depth_std
 
-
 def filter_dbo_score(input_sv_list, args):
 
-    min_dbo_score = 1
+    min_inv_dbo_score = 1
+    min_tra_dbo_score = 0.5
     if args.is_wgs and args.germline_mode:
-        min_dbo_score = 2 
+        min_inv_dbo_score = 2
+        min_tra_dbo_score = 1
 
     for i in range(0, len(input_sv_list)):
         svcall = input_sv_list[i]
-        if svcall.svtype != 'INV':
-            continue
-        else:
-            if min(svcall.dbo_score1, svcall.dbo_score2) < min_dbo_score:
-                input_sv_list[i].ft = 'LOW_DBO_SCORE'
+        if svcall.svtype == 'INV' and min(svcall.dbo_score1, svcall.dbo_score2) < min_inv_dbo_score:
+            input_sv_list[i].ft = 'LOW_DBO_SCORE'
+        elif svcall.chrm1 != svcall.chrm2 and min(svcall.dbo_score1, svcall.dbo_score2) < min_tra_dbo_score:
+            input_sv_list[i].ft = 'LOW_DBO_SCORE'
 
     return input_sv_list
 
@@ -314,7 +342,7 @@ def filter_calls_2d (svcall_list,  black_list_file, out_file, remove_chr_prefix 
             pos1_list, pos2_list_list = black_list_2array_dict[key1]
             number_of_points = get_number_of_points_from_black_list_file(start1, end1, start2, end2, pos1_list, pos2_list_list, bin_size) 
         elif key2 in black_list_2array_dict:
-            myprint('switch chr1 and chr2')
+            my_utils.myprint('switch chr1 and chr2')
             pos1_list, pos2_list_list = black_list_2array_dict[key2]
             number_of_points = get_number_of_points_from_black_list_file(start2, end2, start1, end1, pos1_list, pos2_list_list, bin_size) 
         else:
@@ -356,7 +384,7 @@ def read_2d_blacklist_file(black_list_file, remove_chr_prefix):
 
     black_list_2d_dict = dict()
 
-    black_list_fp = gzip.open(black_list_file, 'r')
+    black_list_fp = gzip.open(black_list_file, 'rt')
 
     bin_size = 0
     
@@ -366,7 +394,7 @@ def read_2d_blacklist_file(black_list_file, remove_chr_prefix):
         if line[0] == '#': 
             line = line.strip().split('=')
             bin_size = int(line[1])
-            myprint ('bin_size = %d' % bin_size)
+            my_utils.myprint ('bin_size = %d' % bin_size)
             continue
 
         if line[0] == '>':
@@ -461,8 +489,12 @@ def filter_low_mapq_gaps(input_sv_list, endpoint_args, chrname2tid_dict):
         for bcd in support_barcode_list:
             all_supp_barcode_dict[bcd] = list()
 
-    myprint('reading low mapq bcd21 file: %s'  % endpoint_args.low_mapq_bcd21_file)
-    low_mapq_bcd21_fp = gzopen(endpoint_args.low_mapq_bcd21_file, 'r')
+    if os.path.exists(endpoint_args.low_mapq_bcd21_file) == False:
+        my_utils.myprint('WARNING! low mapq bcd21 file does not exist.')
+        return input_sv_list
+
+    my_utils.myprint('reading low mapq bcd21 file: %s'  % endpoint_args.low_mapq_bcd21_file)
+    low_mapq_bcd21_fp = my_utils.gzopen(endpoint_args.low_mapq_bcd21_file, 'rt')
     i = 0 
     while 1:
         line = low_mapq_bcd21_fp.readline()
@@ -475,14 +507,14 @@ def filter_low_mapq_gaps(input_sv_list, endpoint_args, chrname2tid_dict):
         if bcd21.bcd in all_supp_barcode_dict:
             all_supp_barcode_dict[bcd21.bcd].append(bcd21)
         if i % 10000000 == 0:
-            myprint('processed %d reads' % i)
+            my_utils.myprint('processed %d reads' % i)
 
     low_mapq_bcd21_fp.close()
 
     for bcd in all_supp_barcode_dict:
         all_supp_barcode_dict[bcd].sort(key = lambda bcd21: bcd21.key_start() )
 
-    myprint('finished reading low mapq bcd21 file: %s'  % endpoint_args.low_mapq_bcd21_file)
+    my_utils.myprint('finished reading low mapq bcd21 file: %s'  % endpoint_args.low_mapq_bcd21_file)
 
     region_size = 10 * 1000
     # for deletion, the region is the deletion region, for other type of svs, the region is 10 kb of either breakpoint
@@ -502,21 +534,21 @@ def filter_low_mapq_gaps(input_sv_list, endpoint_args, chrname2tid_dict):
         tid2 = chrname2tid_dict[svcall.chrm2]
 
         if svcall.endtype1 == 'L_end':
-            region_key_start1 = tid1 * FIX_LENGTH + svcall.start1 - region_size
+            region_key_start1 = tid1 * my_utils.FIX_LENGTH + svcall.start1 - region_size
         else:
-            region_key_start1 = tid1 * FIX_LENGTH + svcall.start1 
+            region_key_start1 = tid1 * my_utils.FIX_LENGTH + svcall.start1 
 
         if svcall.endtype2 == 'L_end':
-            region_key_start2 = tid2 * FIX_LENGTH + svcall.start2 - region_size
+            region_key_start2 = tid2 * my_utils.FIX_LENGTH + svcall.start2 - region_size
         else:
-            region_key_start2 = tid2 * FIX_LENGTH + svcall.start2 
+            region_key_start2 = tid2 * my_utils.FIX_LENGTH + svcall.start2 
 
         region_key_end1 = region_key_start1 + region_size
         region_key_end2 = region_key_start2 + region_size
 
         if svcall.svtype == 'DEL':
-            region_key_start1 = tid1 * FIX_LENGTH + svcall.start1
-            region_key_end1   = tid2 * FIX_LENGTH + svcall.start2
+            region_key_start1 = tid1 * my_utils.FIX_LENGTH + svcall.start1
+            region_key_end1   = tid2 * my_utils.FIX_LENGTH + svcall.start2
             region_key_start2 = region_key_start1
             region_key_end2 = region_key_end1
 

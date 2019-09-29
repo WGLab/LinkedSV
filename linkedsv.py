@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 import os
 import sys
 import subprocess
@@ -10,7 +11,6 @@ import math
 import gzip
 
 from scripts import my_utils 
-from scripts import extract_weird_reads
 from scripts import get_high_coverage_regions 
 from scripts import global_distribution 
 from scripts import find_paired_bk 
@@ -20,6 +20,7 @@ from scripts import filter_calls
 from scripts import arguments
 from scripts import detect_small_deletions
 from scripts import visualize_sv_calls
+from scripts import cal_expected_overlap_value 
 
 
 tab = '\t'
@@ -28,7 +29,6 @@ endl = '\n'
 FIX_LENGTH = int(1e10)
 TimeFormat = '%m/%d/%Y %H:%M:%S'
 
-debug = 0
 
 def main():
 
@@ -37,43 +37,31 @@ def main():
     gc.enable()
 
     args.global_distribution_calculated = False
-
     
-    extract_barcode_from_bam(args, endpoint_args)
+    start_step = 1
 
-    detect_increased_fragment_ends(args, dbo_args, endpoint_args)
+    if start_step < 2:
+        extract_barcode_from_bam(args, endpoint_args)
 
-    detect_decreased_barcode_overlap(args, dbo_args, endpoint_args)
+    if start_step < 3:
+        detect_increased_fragment_ends(args, dbo_args, endpoint_args)
 
+    if start_step < 4:
+        detect_decreased_barcode_overlap(args, dbo_args, endpoint_args)
 
-    ## quantification ##
-    task = 'quantifying SV candidates'
-    if args.run_from_begining == False and my_utils.check_file_exists(args.quantified_bk_pair_file) == True:
-        my_utils.myprint('quantified SV file existed, skipped %s' % (task))
-    else:
-        my_utils.myprint(task)
-        quantify2bkcand.quantify2bkcand(args, dbo_args, endpoint_args)
+    if start_step < 5:
+        quantify_sv_candidates(args, dbo_args, endpoint_args)
+
+    if start_step < 6:
+        merge_sv_calls(args, dbo_args, endpoint_args)
     
-    gc.collect()
-
-    ## merge calls ##
-    task = 'merging SV candidates'
-    if args.run_from_begining == False and my_utils.check_file_exists(args.merged_bedpe_file) == True:
-        my_utils.myprint('merged bedpe file existed, skipped %s' % (task))
-    else:
-        my_utils.myprint(task)
-        merge_quantified_calls.merge_quantified_calls(args, dbo_args, endpoint_args)
+    if start_step < 7:
+        filter_calls.filter_calls(args, dbo_args, endpoint_args)
+        gc.collect()
     
-    gc.collect()
-
-    filter_calls.filter_calls(args, dbo_args, endpoint_args)
-
-    gc.collect()
-
-    image_out_dir = os.path.join(args.out_dir, 'images')
-    my_utils.make_dir(image_out_dir)
-
-    visualize_sv_calls.visualize_sv_calls (args.filter_bedpe_file, dbo_args.bcd13_file, endpoint_args.bcd21_file, args.faidx_file, args.cal_2d_overlapping_barcodes, args.cal_read_depth_from_bcd21, image_out_dir, args.bam_name)
+    if start_step < 8:
+        visualize_sv_calls.visualize_sv_calls (args, dbo_args, endpoint_args)
+        gc.collect()
 
     ## remove temp files ##
     if args.rm_temp_files: 
@@ -104,8 +92,11 @@ def main():
         args.temp_file_list.append(args.hap_type_read_depth_file)
         args.temp_file_list.append(dbo_args.bcd13_file)
         args.temp_file_list.append(args.read_depth_file)
-        
-        
+        args.temp_file_list.append(args.node33_candidate_file)
+        args.temp_file_list.append(args.node55_candidate_file)
+        args.temp_file_list.append(args.node53_candidate_file)
+        args.temp_file_list.append(args.node35_candidate_file)
+        args.temp_file_list.append(args.sortbx_bam)
 
 
         for temp_file in args.temp_file_list:
@@ -165,9 +156,8 @@ def detect_decreased_barcode_overlap (args, dbo_args, endpoint_args):
         else:
             is_wgs = 0
 
-        cmd_args_list = [args.cal_expected_overlap_value, dbo_args.bcd12_file, dbo_args.bcd13_file, str(is_wgs)]
-        my_utils.myprint('running command: %s' % (' '.join(cmd_args_list) ) ) 
-        subprocess.call( cmd_args_list ) 
+        my_utils.myprint (task) 
+        cal_expected_overlap_value.cal_expected_overlap_bcd_cnt(dbo_args.bcd12_file, dbo_args.bcd13_file, is_wgs)
         my_utils.myprint ('finished %s' % task)
 
     return 
@@ -199,8 +189,8 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
     gc.collect()
 
     
-    
     rm_temp_files = 1
+
     detect_small_deletions.detect_small_deletions(args.input_bam, args.out_dir, args.small_del_call_file, args.n_thread, args.ref_fa, args.fermikit_dir, args.samtools, args.bedtools, args.weird_reads_file, args.weird_reads_cluster_file, args.call_small_deletions_binary, args.cal_hap_read_depth_from_bcd21, endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.hap_type_read_depth_file, args.gap_region_bed_file, rm_temp_files) 
     
 
@@ -241,9 +231,9 @@ def extract_barcode_from_bam (args, endpoint_args):
     
     ## sort bam by barcode ##
 
-    cmd = '%s %s | %s sort -l 1 -m 2G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
+    cmd = '%s %s | %s sort -l 1 -m 1G -@ %d -t BX -o %s -' % (args.output_bam_coreinfo, args.bam, args.samtools, args.n_thread, args.sortbx_bam)
 
-    if args.run_from_begining == False and my_utils.check_file_exists(args.sortbx_bam):
+    if (args.run_from_begining == False) and my_utils.check_file_exists(args.sortbx_bam):
         my_utils.myprint('File: %s existed, skipped sorting bam by barcode' % args.sortbx_bam)
     else:
         my_utils.myprint('sorting bam file by barcode')
@@ -278,11 +268,11 @@ def extract_barcode_from_bam (args, endpoint_args):
 def get_low_mapq_bcd21_file(bcd21_file, low_mapq_bcd21_file, min_mapq):
 
     if bcd21_file[-2:] == 'gz':
-        bcd21_fp = gzip.open(bcd21_file, 'r')
+        bcd21_fp = gzip.open(bcd21_file, 'rt')
     else:
         bcd21_fp = open(bcd21_file, 'r')
 
-    low_mapq_bcd21_fp = gzip.open(low_mapq_bcd21_file, 'w')
+    low_mapq_bcd21_fp = gzip.open(low_mapq_bcd21_file, 'wt')
 
     while 1:
         line = bcd21_fp.readline()
@@ -298,6 +288,29 @@ def get_low_mapq_bcd21_file(bcd21_file, low_mapq_bcd21_file, min_mapq):
 
     low_mapq_bcd21_fp.close()
     bcd21_fp.close()
+
+def quantify_sv_candidates(args, dbo_args, endpoint_args):
+    ## quantification ##
+    task = 'quantifying SV candidates'
+    if args.run_from_begining == False and my_utils.check_file_exists(args.quantified_bk_pair_file) == True:
+        my_utils.myprint('quantified SV file existed, skipped %s' % (task))
+    else:
+        my_utils.myprint(task)
+        quantify2bkcand.quantify2bkcand(args, dbo_args, endpoint_args)
+    
+    gc.collect()
+
+def merge_sv_calls(args, dbo_args, endpoint_args):
+    ## merge calls ##
+    task = 'merging SV candidates'
+    if args.run_from_begining == False and my_utils.check_file_exists(args.merged_bedpe_file) == True:
+        my_utils.myprint('merged bedpe file existed, skipped %s' % (task))
+    else:
+        my_utils.myprint(task)
+        merge_quantified_calls.merge_quantified_calls(args, dbo_args, endpoint_args)
+    
+    gc.collect()
+
 
 if __name__ == '__main__':
     main()

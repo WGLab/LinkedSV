@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import sys
 
-import local_assembly
-import cluster_weird_reads
-import svtk
-import my_utils
+from scripts import local_assembly
+from scripts import cluster_weird_reads
+from scripts import svtk
+from scripts import my_utils
 
 tab  = '\t'
 endl = '\n'
@@ -56,7 +60,6 @@ def detect_small_deletions(input_bam_file, out_dir, out_del_call_file, n_threads
     local_assembly_out_file = os.path.join(out_dir, 'local_assembly.del.bedpe')
     short_reads_del_call_file = os.path.join(out_dir, 'discordant_read_pairs.del.bedpe')
 
-    
     local_assembly.small_deletion_dection_by_local_assembly(samtools, bedtools, fermikit_dir, input_bam_file, ref_fasta_file, faidx_file, out_dir, local_assembly_out_file, n_threads, window_size, max_depth, rm_temp_files)
     
 

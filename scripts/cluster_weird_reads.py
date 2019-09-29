@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+
 import os
 import sys
 from scipy.spatial import *
 from scipy.sparse import csr_matrix # csr_matrix
 from scipy.sparse.csgraph import connected_components # connected_components
-import my_utils
+from scripts import my_utils
 import gc
 
 

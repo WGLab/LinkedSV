@@ -1,12 +1,27 @@
 #!/usr/bin/env python
 
 import numpy as np
-from my_utils import *
-from fragment import *
-from cluster_weird_reads import *
-import global_distribution
 import math
 import gzip
+
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
+
+try:
+    from scripts.fragment import *
+except ImportError:
+    from fragment import *
+try:
+    from scripts.cluster_weird_reads import *
+except ImportError:
+    from cluster_weird_reads import *
+try:
+    import scripts.global_distribution
+except ImportError:
+    import global_distribution
+
 
 tab = '\t'
 endl = '\n'

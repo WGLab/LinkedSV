@@ -4,7 +4,11 @@ import argparse
 import copy
 import os
 import sys
-import my_utils
+
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils 
 
 class global_parameter:
     def __init__(self, parser_args):
@@ -111,12 +115,13 @@ class global_parameter:
         self.bk_cand_pair_file = self.out_prefix + '.bk_cand_pairs'
         self.quantified_bk_pair_file = self.out_prefix + '.qbkpair.bedpe'
         self.refinedbedpe_file = self.out_prefix + '.qbkpair.refined.bedpe'
-        self.merged_bedpe_file = self.out_prefix + '.raw_svcalls.bedpe'
-        self.filter_bedpe_file = self.out_prefix + '.filtered_svcalls.bedpe'
+        self.merged_bedpe_file = self.out_prefix + '.raw_large_svcalls.bedpe'
+        self.filter_bedpe_file = self.out_prefix + '.filtered_large_svcalls.bedpe'
 
         self.read_depth_file = self.out_prefix + '.read_depth.txt'
         self.hap_type_read_depth_file = self.out_prefix + '.hap_depth.txt'
         self.small_del_call_file = self.out_prefix + '.small_deletions.bedpe'
+        self.image_out_dir = os.path.join(self.out_dir, 'images')
 
         self.chrname2tid = None
         self.tid2chrname = None
@@ -329,17 +334,18 @@ def output_arguments2file(args, dbo_args, endpoint_args):
     for key in args.__dict__:    
         value = args.__dict__[key]
         if type(value) is not list and type(value) is not dict and type(value) is not set:
-            print >> out_fp, key, '\t', value
+            out_fp.write(str(key) + '\t' + str(value) + '\n')
 
     for key in dbo_args.__dict__:    
         value = dbo_args.__dict__[key]
         if type(value) is not list and type(value) is not dict and type(value) is not set:
-            print >> out_fp, key, '\t', value
+            out_fp.write(str(key) + '\t' + str(value) + '\n')
 
     for key in endpoint_args.__dict__:    
         value = endpoint_args.__dict__[key]
         if type(value) is not list and type(value) is not dict and type(value) is not set:
-            print >> out_fp, key, '\t', value
+            out_fp.write(str(key) + '\t' + str(value) + '\n')
+            #print >> out_fp, key, '\t', value
 
     out_fp.close()
     return

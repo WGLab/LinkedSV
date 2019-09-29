@@ -2,13 +2,30 @@
 
 import os
 import sys
-from bed import *
-from my_utils import *
 import numpy as np
-from fragment import *
 import math
 import subprocess
-import cluster_reads
+
+try:
+    from scripts.bed import *
+except ImportError:
+    from bed import *
+
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
+
+try:
+    from scripts.fragment import *
+except ImportError:
+    from fragment import *
+
+try:
+    from scripts import cluster_reads
+except ImportError:
+    import cluster_reads
+  
 
 
 tab  = '\t'

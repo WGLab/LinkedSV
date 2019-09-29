@@ -8,7 +8,12 @@ import gc
 import math
 import gzip
 from datetime import datetime
-from arguments import *
+
+try:
+    from scripts.arguments import *
+except ImportError:
+    from arguments import *
+    
 
 tab = '\t'
 endl = '\n'

@@ -2,14 +2,22 @@
 
 import os
 import sys
-from bedpe import *
-from my_utils import *
-from scipy import spatial
-from scipy.sparse import csr_matrix
-from scipy.sparse.csgraph import connected_components
 import numpy as np
 import random
 from scipy.stats import binom
+from scipy import spatial
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import connected_components
+
+try:
+    from scripts.bedpe import *
+except ImportError:
+    from bedpe import *
+
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
 
 tab  = '\t'
 endl = '\n'

@@ -4,10 +4,15 @@ import numpy as np
 import math
 
 import bisect
-from my_utils import *
 from sklearn import  linear_model
 from sklearn.metrics import r2_score
 from scipy.stats import norm
+
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
+
 
 tab  = '\t'
 endl = '\n'
@@ -22,7 +27,7 @@ def main():
     #cal_expected_overlap_bcd_cnt(args, dbo_args, endpoint_args)
 
     if len(arg) < argc:
-        print usage
+        print (usage)
         sys.exit()
 
     bcd12_file = arg.pop(0)

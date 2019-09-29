@@ -1,16 +1,34 @@
 #!/usr/bin/env python
 
+
 import math
 import numpy as np
 from scipy.spatial import * # KDTree
 from scipy.sparse import csr_matrix # csr_matrix
 from scipy.sparse.csgraph import connected_components # connected_components
-from my_utils import *
-from fragment import *
-from bedpe import *
-from bed import *
 import bisect
 import gc
+
+try:
+    from scripts.my_utils import *
+except ImportError:
+    from my_utils import *
+
+try:
+    from scripts.fragment import *
+except ImportError:
+    from fragment import *
+
+try:
+    from scripts.bedpe import *
+except ImportError:
+    from bedpe import *
+
+try:
+    from scripts.bed import *
+except ImportError:
+    from bed import *
+
 
 class TBed:
     def __init__(self, attr_list = None):

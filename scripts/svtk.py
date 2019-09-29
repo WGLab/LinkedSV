@@ -2,11 +2,15 @@
 
 import os
 import sys
-import my_utils
 
 from scipy.spatial import *
 from scipy.sparse import csr_matrix # csr_matrix
 from scipy.sparse.csgraph import connected_components # connected_components
+
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils
 
 tab  = '\t'
 endl = '\n'

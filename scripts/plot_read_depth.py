@@ -6,7 +6,11 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from my_utils import *
+
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils
 
 tab  = '\t'
 endl = '\n'
@@ -65,7 +69,7 @@ def plot_read_depth_for1region(chrom, tid, bk_pos1, bk_pos2, out_file, figure_ti
 
 def get_wg_depth_list (in_depth_file, chr_len_list):
 
-    in_depth_fp = gzopen(in_depth_file, 'r') 
+    in_depth_fp = my_utils.gzopen(in_depth_file, 'r') 
 
     bin_size = 1
     while 1:
@@ -79,7 +83,7 @@ def get_wg_depth_list (in_depth_file, chr_len_list):
         if bin_size >= 10:
             break
         else:
-            myprint('ERROR! bin_size < 1 in depth file: %s ' % in_depth_file)
+            my_utils.myprint('ERROR! bin_size < 1 in depth file: %s ' % in_depth_file)
             sys.exit()
 
 
@@ -103,7 +107,7 @@ def get_wg_depth_list (in_depth_file, chr_len_list):
 
     in_depth_fp.close()
 
-    myprint('finished reading file: %s' % in_depth_file)
+    my_utils.myprint('finished reading file: %s' % in_depth_file)
     return wg_high_mapq_depth_list, wg_total_depth_list, bin_size
 
 if __name__ == '__main__':
