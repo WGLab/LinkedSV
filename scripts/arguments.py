@@ -310,6 +310,7 @@ def parse_user_arguments():
     parser.add_argument('--target_region', required = False, metavar = 'BED', type = str, default = '', help ='bed file of target regions (required if --targeted is specified)')
     parser.add_argument('--gap_distance_cut_off', required = False, metavar = 'INT', type = int, default = -1, help ='max distance between two reads in a HMW DNA molecule (default: automatically determined)')
     parser.add_argument('--save_temp_files', dest='save_temp_files', action='store_true', help='Do not remove intermediate files after the run. Use in debug mode. Default: False')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.1')
 
     input_args = parser.parse_args()
 
