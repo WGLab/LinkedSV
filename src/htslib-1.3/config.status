@@ -434,7 +434,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/fangli/projects/LinkedSV-devel/htslib-1.3'
+ac_pwd='/home/fangl/LinkedSV/src/htslib-1.3'
 srcdir='.'
 test -n "$AWK" || AWK=awk
 # The default lists apply if the user does not specify any file.
@@ -607,8 +607,8 @@ S["CRYPTO_LIBS"]=""
 S["libcurl"]="disabled"
 S["define_IRODS_HOME"]="IRODS_HOME ?= /disabled"
 S["irods"]="disabled"
-S["EGREP"]="/bin/grep -E"
-S["GREP"]="/bin/grep"
+S["EGREP"]="/usr/bin/grep -E"
+S["GREP"]="/usr/bin/grep"
 S["CPP"]="gcc -E"
 S["pluginpath"]="$(libexecdir)/htslib"
 S["plugindir"]="$(libexecdir)/htslib"
