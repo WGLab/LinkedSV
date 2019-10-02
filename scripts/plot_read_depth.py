@@ -110,5 +110,3 @@ def get_wg_depth_list (in_depth_file, chr_len_list):
     my_utils.myprint('finished reading file: %s' % in_depth_file)
     return wg_high_mapq_depth_list, wg_total_depth_list, bin_size
 
-if __name__ == '__main__':
-    main()

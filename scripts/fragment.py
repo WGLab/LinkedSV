@@ -216,6 +216,3 @@ def read_bcd22_file_core(bcd22_file, min_frm_length = 0):
     return frm_list
 
 
-if __name__ == '__main__':
-    main()
-        

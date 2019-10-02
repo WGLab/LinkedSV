@@ -7,10 +7,25 @@ from __future__ import print_function
 import os
 import sys
 
-from scripts import local_assembly
-from scripts import cluster_weird_reads
-from scripts import svtk
-from scripts import my_utils
+try:
+    from scripts import local_assembly
+except ImportError:
+    import local_assembly
+
+try:
+    from scripts import cluster_weird_reads
+except ImportError:
+    import cluster_weird_reads
+
+try:
+    from scripts import svtk
+except ImportError:
+    import svtk
+
+try:
+    from scripts import my_utils
+except ImportError:
+    import my_utils
 
 tab  = '\t'
 endl = '\n'

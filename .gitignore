@@ -22,6 +22,8 @@ src/htslib-1.3/test/test-vcf-api
 src/htslib-1.3/test/test-vcf-sweep
 src/htslib-1.3/test/test_view
 src/htslib-1.3/version.h
+src/htslib-1.3/config.log
+src/htslib-1.3/config.status
 fermikit/fermi2/fermi2
 fermikit/htsbox/htsbox
 fermikit/seqtk/seqtk

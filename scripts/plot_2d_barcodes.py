@@ -175,5 +175,3 @@ def plot_one_bedpe(out_dir, target_region_bedpe_list, out_prefix, region_title, 
 
     return
 
-if __name__ == '__main__':
-    main()

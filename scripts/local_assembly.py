@@ -105,6 +105,8 @@ def small_deletion_dection_by_local_assembly(samtools, bedtools, fermikit_dir, i
         for out_combined_vcf_file in out_combined_vcf_file_list:
             os.remove(out_combined_vcf_file)
         os.remove(all_processes_out_combined_vcf_file)
+        cmd = 'rm %s/core.*' % out_dir
+        os.system(cmd)
 
     return
 
