@@ -36,12 +36,12 @@ The following software tools and packages are required for the installation of L
 
 2. Python (version: >= 2.7 python 3 is supported)
 
-3. Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime
+3. Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime. Among these, `math`, `subprocess`, `gzip` and `bisect` are included in the python standard library, meaning that they should be already installed with python.
 
-You can use `pip` to install a python package. You can use the following command to install these python packages. 
+You can use `pip` to install a python package. You can use the following command to install all the required python packages. 
 
 ```
-pip install --user sklearn scipy numpy gzip psutil subprocess bisect math argparse pandas seaborn datetime
+pip install --user sklearn scipy numpy psutil argparse pandas seaborn datetime
 ```
 
 The `--user` tells pip to install the seaborn in your own directory, so that you don't need root access. 
@@ -52,11 +52,13 @@ If you don't have `pip` in your system, you can install pip according to the ins
 
 5. [BEDTools](https://bedtools.readthedocs.io/en/latest/)
 
+6. perl. A recent version should work. If you have issues with perl, please submit an issue in the [issue page](https://github.com/WGLab/LinkedSV/issues). 
+
 
 
 ### <a name="Compilation"></a> Compilation
 
-If the above tools and packages are avaiable, you can use the following command to download and compile LinkedSV: 
+If the above tools and packages are available, you can use the following command to download and compile LinkedSV: 
 
 ```
 git clone https://github.com/WGLab/LinkedSV.git 
@@ -110,6 +112,7 @@ If you don't have samtools and bedtools in your path, please specify the path us
 ```
 python linkedsv.py -i input.phased_possorted_bam.bam -d path/to/output_dir/ -r hg38.fa -v hg38 -t 4 --germline_mode
 ```
+
 The `-v hg38` parameter specify that the reference genome is hg38. If you use another version, please change accordingly. 
 We recommend using at least 4 threads to speed up the run. Each thread need 4GB memory.
 
@@ -131,15 +134,15 @@ python linkedsv.py -i input.phased_possorted_bam.bam -d path/to/output_dir/ -r r
 
 ## <a name="Output"></a> Output Files
 
-LinkedSV will output the SV calls, as well as the figures that allow you to visualize the call. 
+LinkedSV will output the SV calls, as well as the figures that allow you to visualize the large SV calls. 
 
 ### <a name="SV_call_file"></a> SV call file
 
-LinkedSV will output two SV call files, `prefix.raw_svcalls.bedpe` and `prefix.filtered_svcalls.bedpe`. The `prefix.raw_svcalls.bedpe` file contains a raw, unfiltered, highly sensitive callset in BEDPE format. and may contain many false positives calls. The `prefix.filtered_svcalls.bedpe` file contains the filtered SV calls. In most cases, you only need to look at the `prefix.filtered_svcalls.bedpe`. 
+LinkedSV will output three SV call files, `prefix.small_deletions.bedpe`, `prefix.raw_large_svcalls.bedpe` and `prefix.filtered_large_svcalls.bedpe`. The `prefix.small_deletions.bedpe` file contains small deletions detected from short-read information (discordant paired-end reads and local assembly). The `prefix.raw_large_svcalls.bedpe` file contains a raw, unfiltered, highly sensitive large SV callset in BEDPE format, and may contain many false positives calls. The `prefix.filtered_large_svcalls.bedpe` file contains the filtered SV calls. In most cases, you only need to look at the `prefix.filtered_large_svcalls.bedpe` and  `prefix.small_deletions.bedpe`. 
 
 The BEDPE format was defined by BEDtools (https://bedtools.readthedocs.io/en/latest/content/general-usage.html). It can be used to concisely describe disjoint genome features, such as structural variations. We did not use BED format because BED format does not allow inter-chromosomal feature definitions.
 
-The `prefix.filtered_svcalls.bedpe` file contains one SV per line with the following tab-delimited columns:
+The `prefix.filtered_large_svcalls.bedpe` file contains one SV per line with the following tab-delimited columns:
 
 
 |Column|Description|
@@ -175,7 +178,7 @@ prefix.read_depth.txt
 
 These files contains the data that can be used to visualize the SV evidence. 
 
-LinkedSV will also generate a `images` directory in the output directory. The figures showing the evidence of the SV are under this directory. 
+LinkedSV will also generate a `images` directory in the output directory. The figures showing the evidence of the SV are under this directory. Currently, only the evidence of large SVs (in the `prefix.filtered_large_svcalls.bedpe` file) are plotted.
 
 ## <a name="Visualization"></a> Visualization of SV calls
 
