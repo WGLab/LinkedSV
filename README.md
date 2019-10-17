@@ -163,7 +163,7 @@ For the meaning of "endpoint1_type" and "endpoint2_type", please refer to our ma
 
 ### <a name="Intermediate_files"></a> Intermediate files
 
-LinkedSV also output an intermediate files:
+LinkedSV also outputs an intermediate files:
 
 ```
 prefix.bcd21.gz
@@ -171,7 +171,7 @@ prefix.bcd21.gz
 
 This file contains the data that can be used to visualize the SV evidence. 
 
-LinkedSV will also generate a `images` directory in the output directory. The figures showing the evidence of the SV are under this directory. Currently, only the evidence of SVs detected from linked-reads using barcode information (in the `prefix.filtered_large_svcalls.bedpe` file) are plotted.
+LinkedSV will also generate an `images` directory in the output directory. The figures showing the evidence of the SV are under this directory. Currently, only the evidence of SVs detected from linked-reads using barcode information (in the `prefix.filtered_large_svcalls.bedpe` file) are plotted.
 
 ## <a name="Visualization"></a> Visualization of SV calls
 
