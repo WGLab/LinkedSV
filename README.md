@@ -142,8 +142,7 @@ LinkedSV will output three SV call files, `prefix.small_deletions.bedpe`, `prefi
 
 The BEDPE format was defined by BEDtools (https://bedtools.readthedocs.io/en/latest/content/general-usage.html). It can be used to concisely describe disjoint genome features, such as structural variations. We did not use BED format because BED format does not allow inter-chromosomal feature definitions.
 
-The `prefix.filtered_large_svcalls.bedpe` file contains one SV per line with the following tab-delimited columns:
-
+The SV call file contains one SV per line with the following tab-delimited columns:
 
 |Column|Description|
 |:----|:-----------------------------------------|
@@ -164,17 +163,15 @@ For the meaning of "endpoint1_type" and "endpoint2_type", please refer to our ma
 
 ### <a name="Intermediate_files"></a> Intermediate files
 
-LinkedSV also output some intermediate files:
+LinkedSV also output an intermediate files:
 
 ```
 prefix.bcd21.gz
-prefix.bcd13
-prefix.read_depth.txt
 ```
 
-These files contains the data that can be used to visualize the SV evidence. 
+This file contains the data that can be used to visualize the SV evidence. 
 
-LinkedSV will also generate a `images` directory in the output directory. The figures showing the evidence of the SV are under this directory. Currently, only the evidence of large SVs (in the `prefix.filtered_large_svcalls.bedpe` file) are plotted.
+LinkedSV will also generate a `images` directory in the output directory. The figures showing the evidence of the SV are under this directory. Currently, only the evidence of SVs detected from linked-reads using barcode information (in the `prefix.filtered_large_svcalls.bedpe` file) are plotted.
 
 ## <a name="Visualization"></a> Visualization of SV calls
 
