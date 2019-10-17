@@ -77,8 +77,8 @@ class global_parameter:
         self.pigz = os.path.join(self.root_dir, 'bin/pigz')
         self.cluster_reads = os.path.join(self.root_dir, 'bin/cluster_reads')
         self.fermikit_dir = os.path.join(self.root_dir, 'fermikit/fermi.kit')
-        self.call_small_deletions_binary = os.path.join(self.root_dir, 'bin/call_small_deletions')
-
+        self.small_deletion_detection = os.path.join(self.root_dir, 'bin/small_deletion_detection')
+        self.cnv_detection = os.path.join(self.root_dir, 'bin/cnv_detection')
 
         self.alt_ctg_file  = os.path.join(self.root_dir, 'black_lists/alternative_contigs.txt')
 
@@ -120,7 +120,8 @@ class global_parameter:
 
         self.read_depth_file = self.out_prefix + '.read_depth.txt'
         self.hap_type_read_depth_file = self.out_prefix + '.hap_depth.txt'
-        self.small_del_call_file = self.out_prefix + '.small_deletions.bedpe'
+        self.short_reads_sv_call_file = self.out_prefix + '.small_deletions.bedpe'
+        self.cnv_call_file = self.out_prefix + '.large_cnv.bedpe'
         self.image_out_dir = os.path.join(self.out_dir, 'images')
 
         self.chrname2tid = None

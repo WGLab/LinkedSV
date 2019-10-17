@@ -63,7 +63,7 @@ def visualize_sv_calls(args, dbo_args, endpoint_args):
 
     chr_len_list = my_utils.get_chr_length(faidx_file)
     tid2chrname_list, chrname2tid_dict = my_utils.get_chrnames(faidx_file)
-    in_svcall_list = bedpe.read_svcall_bedpe_file(in_svcalls_bedpe_file, chrname2tid_dict)
+    in_svcall_list = read_svcall_bedpe_file(in_svcalls_bedpe_file, chrname2tid_dict)
     for i in range(0, len(in_svcall_list)):
         in_svcall_list[i].format() 
 
@@ -76,6 +76,27 @@ def visualize_sv_calls(args, dbo_args, endpoint_args):
 
     return
 
+def read_svcall_bedpe_file(in_bedpe_file, chrname2tid):
+
+    in_bedpe_fp = open(in_bedpe_file, 'r')
+    lines       = list(in_bedpe_fp)
+    in_bedpe_fp.close()
+
+    bedpe_list = list()
+    for line in lines:
+        if line[0] == '#': continue
+        if 'SVMETHOD=LINKED_READS' not in line: continue
+
+        line = line.strip().split(tab)
+        sv_type = 'UNK'
+        sv_id = '.'
+        if len(line) >= 7: sv_type = line[6]
+        if len(line) >= 8: sv_id = line[7]
+        
+        bedpe1 = bedpe.BedpeSVCall(line[0], line[1], line[2], line[3], line[4], line[5], sv_type, sv_id, chrname2tid)
+        bedpe_list.append(bedpe1)
+
+    return bedpe_list
 
 def generate_target_region_bedpe_list(in_svcall_list, chr_len_list, flank_dist, chrname2tid_dict):
 

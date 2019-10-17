@@ -105,13 +105,10 @@ def small_deletion_dection_by_local_assembly(samtools, bedtools, fermikit_dir, i
         for out_combined_vcf_file in out_combined_vcf_file_list:
             os.remove(out_combined_vcf_file)
         os.remove(all_processes_out_combined_vcf_file)
-        cmd = 'rm %s/core.*' % out_dir
-        os.system(cmd)
 
     return
 
 def small_deletion_dection_from_interval_list(thread_id, n_threads, samtools, bedtools, fermikit_dir, input_bam_file, ref_fasta_file, out_dir, window_size, max_depth, interval_list, out_combined_vcf_file):
-
 
     out_combined_vcf_fp = open(out_combined_vcf_file, 'w')
     out_combined_vcf_fp.write('')
@@ -162,7 +159,7 @@ def process1region(samtools, bedtools, fermikit_dir, ref_fasta_file, input_bam_f
     os.system(cmd)
 
     fastq_file_size = os.path.getsize(out_all_fastq_file)
-    if fastq_file_size > window_size * max_depth * 2 or fastq_file_size < 200: 
+    if fastq_file_size > window_size * max_depth * 2 or fastq_file_size < 20000: 
         cmd = 'rm -r %s' % curr_out_dir
         my_utils.myprint(cmd)
         os.system(cmd)
@@ -185,18 +182,14 @@ def process1region(samtools, bedtools, fermikit_dir, ref_fasta_file, input_bam_f
     sv_call_file    = out_prefix + '.sv.vcf'
 
     cmd = 'gunzip --force %s.gz' % indel_call_file
-    my_utils.myprint(cmd)
     os.system(cmd)
     cmd = 'gunzip --force %s.gz' % sv_call_file
-    my_utils.myprint(cmd)
     os.system(cmd)
 
     cmd = 'cat %s %s >> %s' % (indel_call_file, sv_call_file, out_combined_vcf_file)
-    my_utils.myprint(cmd)
     os.system(cmd)
 
     cmd = 'rm -r %s' % curr_out_dir
-    my_utils.myprint(cmd)
     os.system(cmd)
 
     
@@ -205,14 +198,14 @@ def process1region(samtools, bedtools, fermikit_dir, ref_fasta_file, input_bam_f
 
 def fermikit_variant_calling(fermikit_dir, samtools, n_threads_for_one_process, region_fasta_file, window_size, input_fastq_file, curr_out_dir, out_prefix):
 
-
     out_mak_file = os.path.join(curr_out_dir, '%s.mak' % out_prefix)
     assembly_contigs_file = os.path.join(curr_out_dir, '%s.mag.gz' % out_prefix)
 
-    cmd = '%s/bwa index %s' % (fermikit_dir, region_fasta_file)
+    cmd = 'cd %s && %s/bwa index %s' % (curr_out_dir, fermikit_dir, region_fasta_file)
     my_utils.myprint(cmd)
     os.system(cmd)
-    cmd = 'perl %s/fermi2.pl unitig -s %s -l 151 -t %d -p %s %s > %s\n\n' % (fermikit_dir, window_size, n_threads_for_one_process, out_prefix,  input_fastq_file, out_mak_file)
+
+    cmd = 'cd %s && perl %s/fermi2.pl unitig -s %s -l 151 -t %d -p %s %s > %s\n\n' % (curr_out_dir, fermikit_dir, window_size, n_threads_for_one_process, out_prefix,  input_fastq_file, out_mak_file)
     my_utils.myprint(cmd)
     os.system(cmd)
 
@@ -220,7 +213,7 @@ def fermikit_variant_calling(fermikit_dir, samtools, n_threads_for_one_process, 
     my_utils.myprint(cmd)
     os.system(cmd)
 
-    cmd = 'perl %s/run-calling -t %d %s %s | sh \n\n' % (fermikit_dir, n_threads_for_one_process, region_fasta_file, assembly_contigs_file)
+    cmd = 'cd %s && perl %s/run-calling -t %d %s %s | sh \n\n' % (curr_out_dir, fermikit_dir, n_threads_for_one_process, region_fasta_file, assembly_contigs_file)
     my_utils.myprint(cmd)
     os.system(cmd)
  
@@ -280,6 +273,7 @@ def extract_del_from_vcf_file(in_vcf_file, out_file):
     in_vcf_fp = open(in_vcf_file, 'r')
     out_fp    = open(out_file, 'w')
     min_del_size = 50
+    id = 0
     while 1:
         line = in_vcf_fp.readline().strip()
         if not line: break
@@ -326,15 +320,17 @@ def extract_del_from_vcf_file(in_vcf_file, out_file):
         
         chrom2 = chrom1
         flt = 'PASS'
-        score = 200.0
 
-        out_item = '%s\t%d\t%d\t%s\t%d\t%d\t' % (chrom1, pos1, pos1+1, chrom2, pos2, pos2+1)
-        out_item += '%s\t%s\t%d\t%.2f\tPRECISE;SVMETHOD=local_assembly\n' % (sv_type, flt, sv_size, score)
+        score = 30
+        sv_id = '.'
+        out_item =  '%s\t%d\t%d\t%s\t%d\t%d\t' % (chrom1, pos1, pos1+1, chrom2, pos2, pos2+1)
+        out_item += '%s\t%s\t%d\t%d\t%s\tSVMETHOD=local_assembly\n' % (sv_type, sv_id, sv_size, score, flt)
 
         out_fp.write(out_item)
 
     in_vcf_fp.close()
     out_fp.close()
+
 
     return
  

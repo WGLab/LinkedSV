@@ -92,6 +92,17 @@ class QuantifiedBKCandCore:
 
         return outstring
 
+    def output_core2(self):
+
+        supp_barcodes = self.support_barcodes.strip(',')
+        outstring  = '%s\t%d\t%d\t' % (self.chrm1, self.start1, self.end1)
+        outstring += '%s\t%d\t%d\t' % (self.chrm2, self.start2, self.end2)
+        outstring += '%s\t%s\t%s\t%d\t%s\t' % (self.svtype, self.sv_id, self.svlength, int(self.score), self.ft)
+        outstring += 'SVMETHOD=LINKED_READS;NUM_FRAGMENT_SUPPORT=%d;NUM_READ_PAIR=%d;' % (self.num_fragment_support, self.n_readpair_support)
+        outstring += 'ENDPOINT1=%s;ENDPOINT2=%s;' % (self.endtype1, self.endtype2)
+        outstring += 'BARCODES=%s\n' % (supp_barcodes)
+
+        return outstring
 
 class QuantifiedBKCand:
 

@@ -18,7 +18,7 @@ from scripts import quantify2bkcand
 from scripts import merge_quantified_calls 
 from scripts import filter_calls
 from scripts import arguments
-from scripts import detect_small_deletions
+from scripts import detect_sv_from_short_reads
 from scripts import visualize_sv_calls
 from scripts import cal_expected_overlap_value 
 
@@ -58,8 +58,12 @@ def main():
     if start_step < 7:
         filter_calls.filter_calls(args, dbo_args, endpoint_args)
         gc.collect()
-    
+
     if start_step < 8:
+        detect_sv_from_short_reads.detect_sv_from_short_reads(args, dbo_args, endpoint_args)
+        gc.collect()
+
+    if start_step < 9:
         visualize_sv_calls.visualize_sv_calls (args, dbo_args, endpoint_args)
         gc.collect()
 
@@ -97,7 +101,7 @@ def main():
         args.temp_file_list.append(args.node53_candidate_file)
         args.temp_file_list.append(args.node35_candidate_file)
         args.temp_file_list.append(args.sortbx_bam)
-
+        args.temp_file_list.append(args.merged_bedpe_file)
 
         for temp_file in args.temp_file_list:
             if os.path.exists(temp_file): os.remove(temp_file)
@@ -176,7 +180,6 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
     else:
         is_wgs = 0
 
-    
     if args.run_from_begining == False and my_utils.check_file_exists (endpoint_args.bcd22_file):
         my_utils.myprint('bcd22 file existed, skipped %s' % (task))
     else:
@@ -187,12 +190,6 @@ def detect_increased_fragment_ends(args, dbo_args, endpoint_args):
         os.system(cmd)
     
     gc.collect()
-
-    
-    rm_temp_files = 1
-
-    detect_small_deletions.detect_small_deletions(args.input_bam, args.out_dir, args.small_del_call_file, args.n_thread, args.ref_fa, args.fermikit_dir, args.samtools, args.bedtools, args.weird_reads_file, args.weird_reads_cluster_file, args.call_small_deletions_binary, args.cal_hap_read_depth_from_bcd21, endpoint_args.bcd21_file, endpoint_args.bcd22_file, args.hap_type_read_depth_file, args.gap_region_bed_file, rm_temp_files) 
-    
 
     ### searching for extremely high coverage region  
 

@@ -13,10 +13,9 @@ from scipy.sparse.csgraph import connected_components # connected_components
 import gc
 
 try:
-    from scripts.my_utils import *
+    from scripts import my_utils
 except ImportError:
-    from my_utils import *
-
+    import my_utils
 
 
 tab  = '\t'

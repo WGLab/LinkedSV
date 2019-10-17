@@ -68,11 +68,10 @@ class SVCall:
         self.chrm2, self.pos2 = line[3:5]
         self.pos1  = int(self.pos1)
         self.pos2  = int(self.pos2)
-        
-        self.sv_type, self.filter, self.sv_size, self.score = line[6:10]
+    
+        self.sv_type, self.sv_id, self.sv_size, self.score, self.filter, self.aux_info = line[6:12]
         self.sv_size = int(self.sv_size)
         self.score   = float(self.score)
-        self.aux_info = line[10]
 
         if chrname2tid_dict != None: 
             if self.chrm1 in chrname2tid_dict:
@@ -91,9 +90,9 @@ class SVCall:
 
     def output_bedpe_line(self):
 
-        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t' % (self.chrm1, self.pos1, self.pos1+1, self.chrm2, self.pos2, self.pos2+1)
-        outstring += '%s\t%s\t%d\t%.4f\t%s' % (self.sv_type, self.filter, self.sv_size, self.score, self.aux_info)
-
+        outstring = '%s\t%d\t%d\t%s\t%d\t%d\t' % (self.chrm1, self.pos1, self.pos1+1, self.chrm2, self.pos2, self.pos2+1)      
+        outstring += '%s\t%s\t%d\t%.f\t%s\t%s' % (self.sv_type, self.sv_id, self.sv_size, int(self.score), self.filter, self.aux_info)
+        
         return outstring
         
         

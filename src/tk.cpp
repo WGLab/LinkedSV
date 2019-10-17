@@ -523,6 +523,7 @@ int get_interval_vector_from_bed_file(const std::string & input_bed_file, const 
         fprintf(stderr, "Failed to open file: %s\n", input_bed_file.c_str());
         exit(1);
     }
+    
     while (fgets(line, LINE_MAX, input_bed_fp))
     {
         sscanf (line, "%s\t%d\t%d\t%*s\n", ctg, &itv.start_pos, &itv.end_pos);

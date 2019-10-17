@@ -85,50 +85,38 @@ def filter_calls(args, dbo_args, endpoint_args):
     for i in range(0, len(raw_svcall_list)):
         raw_svcall_list[i].ft = '.'
 
-    my_utils.myprint ('round 1 filtering started')
     round1_retained_sv_list = filter_1d_blacklist(raw_svcall_list, black_reg_dict, alt_chr_name_set, gap_left_region_dict, gap_right_region_dict, bin_size )
-    my_utils.myprint ('round 1 filtering finished')
+  
     n_retained_sv = 0
     for svcall in round1_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
     my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
         
-
-    my_utils.myprint ('round 2 filtering started')
     round2_retained_sv_list = filter_low_mapq_gaps(round1_retained_sv_list, endpoint_args, chrname2tid_dict) 
-    my_utils.myprint ('round 2 filtering finished')
+  
     n_retained_sv = 0
     for svcall in round2_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
-    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
-    
-    my_utils.myprint ('round 3 of filtering started')
 
     if args.ref_version == 'b37':
         remove_chr_prefix = True
     else:
         remove_chr_prefix = False
 
-    my_utils.myprint ('round 3 filtering started')
     round3_retained_sv_list = filter_calls_2d (round2_retained_sv_list, args.black_region_2d_file, args.filter_bedpe_file, remove_chr_prefix)
-    my_utils.myprint ('round 3 filtering finished')
+
     n_retained_sv = 0
     for svcall in round3_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
-    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
-
-    my_utils.myprint ('round 4 filtering started')
+   
     round4_retained_sv_list = filter_dbo_score (round3_retained_sv_list, args)
-    my_utils.myprint ('round 4 filtering finished')
+  
     n_retained_sv = 0
     for svcall in round4_retained_sv_list:
         if svcall.ft == '.': n_retained_sv += 1
-    my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
 
-    my_utils.myprint ('round 5 filtering started')
     round5_retained_sv_list = filter_read_depth (round4_retained_sv_list, args)
-    my_utils.myprint ('round 5 filtering finished')
-
+  
     round6_retained_sv_list = filter_sv_length (round5_retained_sv_list, args)
 
     final_retained_sv_list = round6_retained_sv_list
@@ -139,9 +127,7 @@ def filter_calls(args, dbo_args, endpoint_args):
     my_utils.myprint('number of retained SVs: %d' % n_retained_sv)
 
     header  = '#chrom1\tstart1\tstop1\tchrom2\tstart2\tstop2\t'
-    header += 'sv_type\tsv_id\tsv_length\tfilter\t'
-    header += 'num_supporting_fragments\tnum_supporting_read_pairs\t'
-    header += 'endpoint1_type\tendpoint2_type\tqual_score\ttwin_win_score1\ttwin_win_score2\tsupporting_barcodes\n'
+    header += 'sv_type\tsv_id\tsv_length\tqual_score\tfilter\tinfo\n'
 
     out_file  = args.filter_bedpe_file
     out_fp    = open(out_file, 'w')
@@ -157,7 +143,7 @@ def filter_calls(args, dbo_args, endpoint_args):
             sv_id_str = str(sv_id)
             sv_id_str = '0' * (n_digit - len(sv_id_str)) + sv_id_str
             svcall.sv_id = 'ID%s' % sv_id_str
-            out_fp.write(svcall.output_core() + endl)
+            out_fp.write(svcall.output_core2() + endl)
 
     out_fp.close()
 
