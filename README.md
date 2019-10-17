@@ -138,7 +138,7 @@ LinkedSV will output the SV calls, as well as the figures that allow you to visu
 
 ### <a name="SV_call_file"></a> SV call file
 
-LinkedSV will output three SV call files, `prefix.small_deletions.bedpe`, `prefix.raw_large_svcalls.bedpe` and `prefix.filtered_large_svcalls.bedpe`. The `prefix.small_deletions.bedpe` file contains small deletions detected from short-read information (discordant paired-end reads and local assembly). The `prefix.raw_large_svcalls.bedpe` file contains a raw, unfiltered, highly sensitive large SV callset in BEDPE format, and may contain many false positives calls. The `prefix.filtered_large_svcalls.bedpe` file contains the filtered SV calls. In most cases, you only need to look at the `prefix.filtered_large_svcalls.bedpe` and  `prefix.small_deletions.bedpe`. 
+LinkedSV will output three SV call files, `prefix.small_deletions.bedpe`, `prefix.large_cnv.bedpe` and `prefix.filtered_large_svcalls.bedpe`. The `prefix.small_deletions.bedpe` file contains small deletions detected from short-read information (discordant paired-end reads and local assembly). The `prefix.large_cnv.bedpe` file contains copy number variants detected from an algorithm based on read depth. The `prefix.filtered_large_svcalls.bedpe` file contains the filtered SV calls detected from linked-reads using barcode information. 
 
 The BEDPE format was defined by BEDtools (https://bedtools.readthedocs.io/en/latest/content/general-usage.html). It can be used to concisely describe disjoint genome features, such as structural variations. We did not use BED format because BED format does not allow inter-chromosomal feature definitions.
 
@@ -156,13 +156,9 @@ The `prefix.filtered_large_svcalls.bedpe` file contains one SV per line with the
 |sv_type|SV type inferred from breakpoints|
 |sv_id|unique ID of the SV|
 |sv_length|SV length|
+|qual|quality score|
 |filter|filter. 'PASS' if the call passed all filtering steps.| 
-|num_supporting_fragments|number of fragment pairs that support the SV|
-|num_supporting_read_pairs|number of read pairs that support the SV|
-|endpoint1_type|type of enriched fragment endpoint near breakpoint 1|
-|endpoint2_type|type of enriched fragment endpoint near breakpoint 2|
-|qual_score|quality score of the SV|
-|supporting_barcodes|barcode sequences of the fragments that support the SV|
+|info|detailed information of the SV call|
 
 For the meaning of "endpoint1_type" and "endpoint2_type", please refer to our manuscript ([Citation](#Citation))
 
