@@ -132,6 +132,8 @@ def remove_redundantsv(svcall_list, overlap_fraction = 0.5, max_distance = 10000
         node = (svcall.key1(), svcall.key2())
         coord_list.append(node)
 
+    if len(coord_list) == 0: 
+        return svcall_list
     tree = cKDTree(coord_list, leafsize = 10000)
     edge_list = list()
 
