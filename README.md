@@ -48,7 +48,7 @@ The `--user` tells pip to install the seaborn in your own directory, so that you
 
 If you don't have `pip` in your system, you can install pip according to the instructions [here](https://pip.pypa.io/en/stable/installing/)
 
-4. [SAMtools](https://github.com/samtools/samtools) (version >= 1.3)
+4. [SAMtools](https://github.com/samtools/samtools) (version >= 1.5)
 
 5. [BEDTools](https://bedtools.readthedocs.io/en/latest/)
 
