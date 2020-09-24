@@ -103,7 +103,10 @@ def filter_calls(args, dbo_args, endpoint_args):
     else:
         remove_chr_prefix = False
 
-    round3_retained_sv_list = filter_calls_2d (round2_retained_sv_list, args.black_region_2d_file, args.filter_bedpe_file, remove_chr_prefix)
+    if os.path.exists(args.black_region_2d_file):
+        round3_retained_sv_list = filter_calls_2d (round2_retained_sv_list, args.black_region_2d_file, args.filter_bedpe_file, remove_chr_prefix)
+    else:
+        round3_retained_sv_list = round2_retained_sv_list
 
     n_retained_sv = 0
     for svcall in round3_retained_sv_list:
