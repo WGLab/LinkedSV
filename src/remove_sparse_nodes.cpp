@@ -171,6 +171,7 @@ int remove_sparse_nodes(const char *in_node_file, const char *out_node_file, int
             free(squre_node_count);
         }
     }
+    fclose(out_node_fp);
 
     return 0;
 }

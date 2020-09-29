@@ -171,13 +171,27 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
 
         myprint ('removing sparse nodes, min_support_fragments is %d' % args.min_support_fragments )
         cmd = '%s %s %s %d %s %d' % (args.remove_sparse_nodes, args.node33_file, args.node33_candidate_file, max_gap_distance, args.faidx_file, args.min_support_fragments) 
-        os.system(cmd)
+        run_system_cmd(cmd)
         cmd = '%s %s %s %d %s %d' % (args.remove_sparse_nodes, args.node55_file, args.node55_candidate_file, max_gap_distance, args.faidx_file, args.min_support_fragments) 
-        os.system(cmd)
+        run_system_cmd(cmd)
         cmd = '%s %s %s %d %s %d' % (args.remove_sparse_nodes, args.node35_file, args.node35_candidate_file, max_gap_distance, args.faidx_file, args.min_support_fragments) 
-        os.system(cmd)
+        run_system_cmd(cmd)
         cmd = '%s %s %s %d %s %d' % (args.remove_sparse_nodes, args.node53_file, args.node53_candidate_file, max_gap_distance, args.faidx_file, args.min_support_fragments) 
-        os.system(cmd)
+        run_system_cmd(cmd)
+
+        if os.path.exist(args.node33_candidate_file) == False: 
+            myprint ('ERROR! %s was not generated' % args.node33_candidate_file)
+            sys.exit()
+        if os.path.exist(args.node55_candidate_file) == False: 
+            myprint ('ERROR! %s was not generated' % args.node55_candidate_file)
+            sys.exit()
+        if os.path.exist(args.node35_candidate_file) == False: 
+            myprint ('ERROR! %s was not generated' % args.node35_candidate_file)
+            sys.exit()
+        if os.path.exist(args.node53_candidate_file) == False: 
+            myprint ('ERROR! %s was not generated' % args.node53_candidate_file)
+            sys.exit()
+
     else:
         myprint ('node candidate file existed. skipped removing sparse nodes')
 
@@ -217,6 +231,17 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
         args.temp_file_list = list()
 
     return
+
+def run_system_cmd(cmd):
+
+    eprint('Running CMD: %s' % cmd)
+    ret = os.system(cmd)
+    if ret != 0: 
+        eprint('ERROR: Failed to run command: %s' % cmd)
+        eprint('Return value is: %d' % ret)
+        sys.exit()
+
+    return 
 
 def get_lines_from_file(input_file):
 
