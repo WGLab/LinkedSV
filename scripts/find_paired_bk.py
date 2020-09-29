@@ -179,16 +179,16 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
         cmd = '%s %s %s %d %s %d' % (args.remove_sparse_nodes, args.node53_file, args.node53_candidate_file, max_gap_distance, args.faidx_file, args.min_support_fragments) 
         run_system_cmd(cmd)
 
-        if os.path.exist(args.node33_candidate_file) == False: 
+        if os.path.exists(args.node33_candidate_file) == False: 
             myprint ('ERROR! %s was not generated' % args.node33_candidate_file)
             sys.exit()
-        if os.path.exist(args.node55_candidate_file) == False: 
+        if os.path.exists(args.node55_candidate_file) == False: 
             myprint ('ERROR! %s was not generated' % args.node55_candidate_file)
             sys.exit()
-        if os.path.exist(args.node35_candidate_file) == False: 
+        if os.path.exists(args.node35_candidate_file) == False: 
             myprint ('ERROR! %s was not generated' % args.node35_candidate_file)
             sys.exit()
-        if os.path.exist(args.node53_candidate_file) == False: 
+        if os.path.exists(args.node53_candidate_file) == False: 
             myprint ('ERROR! %s was not generated' % args.node53_candidate_file)
             sys.exit()
 
@@ -234,11 +234,11 @@ def build_graph_from_fragments (args, dbo_args, endpoint_args):
 
 def run_system_cmd(cmd):
 
-    eprint('Running CMD: %s' % cmd)
+    myprint('Running CMD: %s' % cmd)
     ret = os.system(cmd)
     if ret != 0: 
-        eprint('ERROR: Failed to run command: %s' % cmd)
-        eprint('Return value is: %d' % ret)
+        myprint('ERROR: Failed to run command: %s' % cmd)
+        myprint('Return value is: %d' % ret)
         sys.exit()
 
     return 
