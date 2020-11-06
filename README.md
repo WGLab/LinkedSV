@@ -284,10 +284,4 @@ Please use the [GitHub's Issues page](https://github.com/WGLab/LinkedSV/issues) 
 
 ## <a name="License"></a> License Agreement
 
-By using the software, you acknowledge that you agree to the terms below:
-
-For academic and non-profit use, you are free to fork, download, modify, distribute and use the software without restrictions.
-
-For commercial use, you are required to contact the authors at Children's Hospital of Philadelphia to discuss licensing options.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+LinkedSV is under MIT license.
