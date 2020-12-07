@@ -137,7 +137,7 @@ def filter_calls(args, dbo_args, endpoint_args):
     out_fp.write(header)
     sv_id = 0
     n_svcall = len(final_retained_sv_list)
-    n_digit = int(math.log10(n_svcall) + 2)
+    n_digit = int(math.log10(n_svcall) + 2) if n_svcall > 0 else 0
 
     for svcall in final_retained_sv_list:
         if svcall.ft == '.':
