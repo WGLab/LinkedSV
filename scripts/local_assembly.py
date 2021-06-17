@@ -282,7 +282,12 @@ def extract_del_from_vcf_file(in_vcf_file, out_file):
         items = line.split('\t')
 
         chrom1 = items[0]
-        pos1 = int(items[1])
+        try:
+            pos1 = int(items[1])
+        except:
+            my_utils.myprint('ERROR! invalid VCF record: %s' % line)
+            continue
+        
         ref_allele = items[3]
         alt_allele = items[4]
         flt = items[6]
