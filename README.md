@@ -17,7 +17,7 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
   - [Twin-window evidence](#Twin_window_evidence)
   - [Heat Map of overlapping barcodes](#Heat_Map)
 - [Future extensions](#Future_extensions)
-- [Citation](#Output)
+- [Citation](#Citation)
 - [Getting Help](#Getting_Help)
 - [License Agreement](#License)
 
