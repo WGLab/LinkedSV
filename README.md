@@ -6,6 +6,7 @@ LinkedSV is a novel structural variant caller for 10X Genomics (linked-read) seq
 - [Installation](#Installation)
   - [Prerequisites](#Prerequisites)
   - [Compilation](#Compilation)
+  - [Conda](#Conda)
 - [Usage](#Usage)
   - [General usage](#General_usage)
   - [Use cases](#Use_cases)
@@ -65,6 +66,10 @@ git clone https://github.com/WGLab/LinkedSV.git
 cd LinkedSV/
 sh build.sh 
 ```
+
+### <a name="Conda"></a> Conda
+
+LinkedSV is available in [Bioconda](https://anaconda.org/bioconda/linkedsv) as well thanks to pdimens
 
 
 ## <a name="Usage"></a>Usage
