@@ -62,7 +62,7 @@ If the above tools and packages are available, you can use the following command
 ```
 git clone https://github.com/WGLab/LinkedSV.git 
 cd LinkedSV/
-sh build.sh 
+make
 ```
 
 ### <a name="Conda"></a> Conda
