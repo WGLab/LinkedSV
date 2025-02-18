@@ -43,6 +43,12 @@ int get_read_depth_from_read_bcd21_file(const char * bcd21_file, INT_LIST ** wg_
 		if (flag & (256 + 1024 + 2048) ){ continue; }
 
 		idx = (start_pos + end_pos) / ( 2 * bin_size);
+        if (idx > wg_high_qual_read_depth_list[tid]->size || idx > wg_low_qual_read_depth_list[tid]->size)
+        {
+            fprintf(stderr, "ERROR! The faidx file and input bcd21 file don't match! tid=%d, end_pos=%d, idx=%d, number of bins: %d, %d\n", tid, end_pos, idx, wg_high_qual_read_depth_list[tid]->size, wg_low_qual_read_depth_list[tid]->size);
+            fprintf(stderr, "Please make sure that the reference fasta file is the same file that was used to generate the bam.");
+            exit(1);
+        }
 		map_len = end_pos - start_pos;
 
 		if (mapq >= mapq_cutoff){

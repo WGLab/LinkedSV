@@ -35,17 +35,15 @@ The following software tools and packages are required for the installation of L
 
 1. c++ compiler (A c++ compiler that supports C++11 is needed to build LinkedSV. Development of the code is performed using g++ v4.8.5)
 
-2. Python (version: >= 2.7 python 3 is supported)
+2. Python (version: >= 2.7 or python 3)
 
 3. Python packages: sklearn, scipy, numpy, gzip, psutil, subprocess, bisect, math, argparse, pandas, seaborn, datetime. Among these, `math`, `subprocess`, `gzip` and `bisect` are included in the python standard library, meaning that they should be already installed with python.
 
 You can use `pip` to install a python package. You can use the following command to install all the required python packages. 
 
 ```
-pip install --user sklearn scipy numpy psutil argparse pandas seaborn datetime
+pip install scikit-learn scipy numpy psutil argparse pandas seaborn datetime
 ```
-
-The `--user` tells pip to install the seaborn in your own directory, so that you don't need root access. 
 
 If you don't have `pip` in your system, you can install pip according to the instructions [here](https://pip.pypa.io/en/stable/installing/)
 
